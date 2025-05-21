@@ -1,0 +1,17 @@
+{
+    "categories": {
+        "图书": 1,
+        "服装": 1,
+        "食品": 1
+    },
+    "products": [
+        {
+            "category": "图书",
+            "description": "中国四大名著之一",
+            "imagePath": "",
+            "name": "红楼梦",
+            "price": 111,
+            "stock": 22
+        }
+    ]
+}

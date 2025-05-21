@@ -1,0 +1,13 @@
+release/consumer.o
+release/filemanager.o
+release/globalstate.o
+release/main.o
+release/merchant.o
+release/product.o
+release/productmodel.o
+release/user.o
+release/qrc_qml.o
+release/moc_consumer.o
+release/moc_globalstate.o
+release/moc_productmodel.o
+release/moc_user.o

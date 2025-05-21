@@ -1,0 +1,13 @@
+<RCC>
+    <qresource prefix="/">
+        <file>qml/MainWindow.qml</file>
+        <file>qml/Auth/LoginRegisterWindow.qml</file>
+        <file>qml/AddProductDialog.qml</file>
+        <file>qml/CartWindow.qml</file>
+        <file>qml/ProductDelegate.qml</file>
+        <file>qml/Auth/PasswordDialog.qml</file>
+        <file>qml/Auth/RechargeDialog.qml</file>
+        <file>qml/EditProductDialog.qml</file>
+        <file>qml/CategoryDiscountDialog.qml</file>
+    </qresource>
+</RCC>
