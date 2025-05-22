@@ -81,8 +81,9 @@ Dialog
                     // console.log("用户类型：", userType);
                     // console.log("全局状态：", JSON.stringify(global));
                     if(User.verifyLogin(tfUsername.text, tfPassword.text)) {
+                        lblMessage.text = "登录成功！";
                         loginRegisterDialog.loginSuccess({username: tfUsername.text, type: userType});
-                        close();
+                        Qt.callLater(() => close());
                     } else {
                         lblMessage = "用户名或密码错误";
                     }
@@ -95,15 +96,14 @@ Dialog
                         return;
                     }
                     var res = User.registerUser(tfUsername.text, tfPassword.text, userType, 0.0);
-                    if (res.success)
-                    {
-                        loginRegisterDialog.loginSuccess({username: tfUsername.text, type:userType});
-                        lblMessage.text = "注册成功，请登录";
+                    if (res.success) {
+                        lblMessage.text = "注册成功! 2秒后自动登录";
                         rbLogin.checked = true;
-                        close();
-                    }
-                    else
-                    {
+                        setTimeout(() => {
+                            loginRegisterDialog.loginSuccess({username: tfUsername.text, type:userType});
+                            close();
+                        }, 2000);
+                    } else {
                         lblMessage.text = res.error;
                     }
                 }

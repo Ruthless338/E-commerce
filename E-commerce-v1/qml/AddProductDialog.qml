@@ -13,6 +13,13 @@ Dialog {
     property string selectedImagePath: ""
 
     ColumnLayout {
+        Label {
+            id: operationStatus
+            color: "green"
+            visible: false
+            Layout.alignment: Qt.AlignHCenter
+        }
+
         TextField { id: pName; placeholderText: "商品名称" }
         TextField { id: pDesc; placeholderText: "商品描述" }
         TextField { id: pPrice; placeholderText: "价格" }
@@ -68,6 +75,9 @@ Dialog {
                 onClicked: {
                     if (addProductDialog.selectedImagePath === "") {
                         console.error("未选择图片");
+                        operationStatus.text = "请选择图片！";
+                        operationStatus.color = "red";
+                        operationStatus.visible = true;
                         return;
                     }
 
@@ -88,7 +98,9 @@ Dialog {
                         pCategory.currentText,
                         imagePath
                     );
-                    addProductDialog.visible = false;
+                    operationStatus.text = "商品添加成功！";
+                    operationStatus.color = "green";
+                    Qt.setTimeout(() => addProductDialog.visible = false, 1500);
                 }
             }
             Button {

@@ -95,6 +95,7 @@ Dialog {
                         editPrice.text !== productData.price.toFixed(2) ? parseFloat(editPrice.text) : productData.price,
                         editStock.text !== productData.stock.toString() ? parseInt(editStock.text) : productData.stock
                     );
+                    Toast.show("商品信息已更新", 1500, "#4CAF50");
                     editDialog.visible = false;
                 }
             }

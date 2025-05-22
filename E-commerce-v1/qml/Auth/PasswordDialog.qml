@@ -73,9 +73,11 @@ Dialog {
                 onClicked: {
                     if (AuthManager.changePassword(username, tfCurrentPwd.text, tfNewPwd.text)) {
                         lblMessage.text = "密码修改成功";
-                        passwordDialog.visible = false
+                        lblMessage.color = "green";
+                        Qt.callLater(() => passwordDialog.visible = false);
                     } else {
                         lblMessage.text = "密码修改失败";
+                        lblMessage.color = "red";
                     }
                 }
             }
