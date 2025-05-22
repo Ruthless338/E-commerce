@@ -120,7 +120,7 @@ void FileManager::saveUser(const User* user)
         jsonArray.append(obj);
     }
 
-    QDir dir("D:/Qt_projects/E-commerce-v1/data");
+    QDir dir("D:/Qt_projects/E-commmerce/E-commerce-v1/data");
     if(!dir.exists()) {
         dir.mkpath(".");
     }

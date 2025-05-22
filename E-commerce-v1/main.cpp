@@ -5,6 +5,7 @@
 #include <QTimer>
 #include "user.h"
 #include "filemanager.h"
+#include "authmanager.h"
 #include "product.h"
 #include "productmodel.h"
 #include "globalstate.h"
@@ -15,23 +16,24 @@ int main(int argc, char *argv[]) {
     QQuickStyle::setStyle("Material");
 
     //--------------------- 注册C++类到QML上下文 ---------------------
-    // 1. 注册User类为单例，供QML全局调用
+    // 注册User类为单例，供QML全局调用
     qmlRegisterSingletonType<User>("ECommerce.Core", 1, 0, "User",
                                    [](QQmlEngine *engine, QJSEngine *scriptEngine) -> QObject* {
                                        return new Consumer("", "", 0.0);
                                    }
                                    );
-
-    // 2. 注册商品数据模型,将ProductModel实例暴露为全局属性
+    qmlRegisterSingletonType<AuthManager>(
+        "ECommerce.Core", 1, 0, "AuthManager",
+        [](QQmlEngine *engine, QJSEngine *scriptEngine) -> QObject* {
+            return new AuthManager;
+        }
+        );
+    // 注册商品数据模型,将ProductModel实例暴露为全局属性
     ProductModel productModel;
     engine.rootContext()->setContextProperty("productModel", &productModel);
 
-    // 3. 注册全局状态对象（用于传递用户登录状态）
+    // 注册全局状态对象（用于传递用户登录状态）
     GlobalState *globalState = new GlobalState();
-    // globalState->setProperty("username", "");
-    // globalState->setProperty("userType", "");
-    // globalState->setProperty("isConsumer", false);
-    // globalState->setProperty("isMerchant", false);
     engine.rootContext()->setContextProperty("global", globalState);
 
     //--------------------- 加载QML主界面 ---------------------

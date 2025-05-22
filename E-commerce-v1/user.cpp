@@ -18,12 +18,7 @@ void User::updateBalance(double amount)
 
 bool User::verifyPassword(const QString &inPwd) const
 {
-    return password == inPwd;
-}
-
-void User::changePassword(const QString &newPwd)
-{
-    password = newPwd;
+    return password == hashPassword(inPwd);
 }
 
 QVariantMap User::registerUser(const QString& username, const QString& pwd, const QString& type, const double& balance)
@@ -60,4 +55,8 @@ QString User::hashPassword(const QString &password) {
         );
     return QString(hash.toHex());
 }
+void User::changePassword(const QString &newPwd) {
+    this->password = newPwd;
+}
+
 

@@ -26,7 +26,8 @@ public:
 
     virtual ~Product() = default;
 
-    virtual double getPrice() const { return basePrice; }
+    double getBasePrice() const { return basePrice; }
+    virtual double getPrice() const = 0;
     QString getName() const { return name; }
     int getStock() const { return stock; }
     QString getDescription() const { return description; }

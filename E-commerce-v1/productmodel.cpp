@@ -35,7 +35,7 @@ QVariant ProductModel::data(const QModelIndex &index, int role) const {
     case DescriptionRole:
         return product->getDescription();
     case PriceRole:
-        return product->getPrice();
+        return product->getBasePrice();
     case StockRole:
         return product->getStock();
     case CategoryRole:
@@ -172,5 +172,6 @@ void ProductModel::setCategoryDiscount(const QString& category, double discount)
         QModelIndex bottom = createIndex(affectedRows.last(), 0);
         emit dataChanged(top, bottom, {PriceRole, DiscountRole});
     }
+    saveProducts();
 }
 

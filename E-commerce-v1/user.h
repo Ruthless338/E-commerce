@@ -39,9 +39,10 @@ public:
         const QString& username,
         const QString& password
     );
-    Q_INVOKABLE void changePassword(const QString &newPwd);
     Q_INVOKABLE QString getPassword() const { return password; }
     Q_INVOKABLE static QString hashPassword(const QString &password);
+
+    void changePassword(const QString &newPwd);
 };
 
 #endif // USER_H

@@ -46,6 +46,11 @@ ApplicationWindow {
         visible: false
     }
 
+    Components.CategoryDiscountDialog {
+        id: categoryDiscountDialog
+        visible: false
+    }
+
     header: ToolBar {
         RowLayout {
             anchors.fill: parent
@@ -134,6 +139,11 @@ ApplicationWindow {
                 text: "添加商品"
                 visible: global ? global.isMerchant : false
                 onClicked: addProductDialog.visible = true
+            }
+            Button {
+                text: "设置折扣"
+                visible: global ? global.isMerchant : false
+                onClicked: categoryDiscountDialog.visible = true
             }
         }
     }

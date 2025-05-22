@@ -75,7 +75,7 @@ Dialog {
                     var decodedPath = addProductDialog.selectedImagePath;
                     var fileName = decodedPath.split("/").pop();
 
-                    // 修复目录拼写错误（E-commmerce → E-commerce）
+                    // 修复目录拼写错误
                     var destDir = "D:/Qt_projects/E-commerce/E-commerce-v1/images";
                     var imagePath = destDir + "/" + fileName;
 

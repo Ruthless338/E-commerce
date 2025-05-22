@@ -2,6 +2,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import ECommerce.Core 1.0
 
 Dialog {
     id: passwordDialog
@@ -70,11 +71,11 @@ Dialog {
                 Material.background: "#4CAF50"
                 Material.foreground: "white"
                 onClicked: {
-                    if (validateInput()) {
-                        // 调用C++修改密码接口
-                        User.changePassword(username, tfCurrentPwd.text, tfNewPwd.text)
-                        lblMessage.text = "密码修改成功"
-                        Qt.callLater(passwordDialog.close)
+                    if (AuthManager.changePassword(username, tfCurrentPwd.text, tfNewPwd.text)) {
+                        lblMessage.text = "密码修改成功";
+                        passwordDialog.visible = false
+                    } else {
+                        lblMessage.text = "密码修改失败";
                     }
                 }
             }
@@ -95,7 +96,7 @@ Dialog {
             lblMessage.text = "两次输入的新密码不一致"
             return false
         }
-        if (!User.verifyPassword(username, tfCurrentPwd.text)) {
+        if (!AuthManager.verifyPassword(username, tfCurrentPwd.text)) {
             lblMessage.text = "当前密码错误"
             return false
         }
