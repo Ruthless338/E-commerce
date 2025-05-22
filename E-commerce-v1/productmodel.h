@@ -17,7 +17,8 @@ public:
         StockRole,
         CategoryRole,
         DiscountRole,
-        CurrentPriceRole
+        CurrentPriceRole,
+        ImagePathRole
     };
 
     explicit ProductModel(QObject *parent = nullptr);
@@ -31,7 +32,7 @@ public:
     QHash<int, QByteArray> roleNames() const override;
 
     // 添加商品
-    Q_INVOKABLE void addProduct(const QString &name, const QString &desc, double price, int stock, const QString &category);
+    Q_INVOKABLE void addProduct(const QString &name, const QString &desc, double price, int stock, const QString &category, const QString& imagePath);
     // 搜索商品
     Q_INVOKABLE void search(const QString &keyword);
     // 重置搜索

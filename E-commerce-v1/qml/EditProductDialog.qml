@@ -57,12 +57,24 @@ Dialog {
         FileDialog {
             id: fileDialog
             onAccepted: {
-                if (fileDialog.fileUrl) {
-                    var fileUrl = fileDialog.fileUrl.toString(); // 获取完整 URL
-                    var fileName = fileUrl.split("/").pop(); // 提取文件名
-                    var destPath = "file:///D:/Qt_projects/E-commerce/E-commerce-v1/images/" + fileName;
+                if (fileDialog.selectedFiles.length > 0) {
+                    // 获取原始路径并转换为纯本地路径字符串
+                    var rawPath = fileDialog.selectedFiles[0];
+                    var filePath = rawPath.toString()
+                                  .replace(/^file:\/\//, "")  // 移除 URL 前缀
+                                  .replace(/\\/g, "/");      // 统一为斜杠分隔符
+
+                    // 提取文件名
+                    var decodedPath = decodeURIComponent(filePath);
+                    var fileName = decodedPath.split("/").pop();
+
+                    // 构造目标路径
+                    var destDir = "D:/Qt_projects/E-commerce/E-commerce-v1/images";
+                    var destPath = destDir + "/" + fileName;
+
+                    // 调用 C++ 函数复制文件
                     Qt.callLater(() => {
-                        productModel.copyImage(fileUrl, destPath);
+                        productModel.copyImage(decodedPath, destPath);
                     });
                 } else {
                     console.error("未选择文件");

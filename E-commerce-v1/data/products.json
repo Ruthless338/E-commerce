@@ -7,11 +7,11 @@
     "products": [
         {
             "category": "图书",
-            "description": "中国四大名著之一",
-            "imagePath": "",
-            "name": "红楼梦",
-            "price": 111,
-            "stock": 22
+            "description": "1",
+            "imagePath": "D:/Qt_projects/E-commerce/E-commerce-v1/images/1.jpg",
+            "name": "1",
+            "price": 1,
+            "stock": 1
         }
     ]
 }

@@ -16,11 +16,13 @@ public:
     Product(const QString& n,
             const QString& desc,
             double price,
-            int stk):
+            int stk,
+            const QString& imgPath = ""):
         name(n),
         description(desc),
         basePrice(price),
-        stock(stk) {}
+        stock(stk),
+        imagePath(imgPath){}
 
     virtual ~Product() = default;
 

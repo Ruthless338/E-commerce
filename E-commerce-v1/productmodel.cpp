@@ -13,6 +13,7 @@ ProductModel::ProductModel(QObject *parent) : QAbstractListModel(parent) {
     m_roleNames[CategoryRole] = "category";
     m_roleNames[DiscountRole] = "discount";
     m_roleNames[CurrentPriceRole] = "currentPrice";
+    m_roleNames[ImagePathRole] = "imagePath";
 
     // 加载初始商品数据
     loadProducts();
@@ -43,6 +44,8 @@ QVariant ProductModel::data(const QModelIndex &index, int role) const {
         return product->getDiscount();
     case CurrentPriceRole:
         return product->getPrice();
+    case ImagePathRole:
+        return product->getImagePath();
     default:
         return QVariant();
     }
@@ -52,16 +55,21 @@ QHash<int, QByteArray> ProductModel::roleNames() const {
     return m_roleNames;
 }
 
-void ProductModel::addProduct(const QString &name, const QString &desc, double price, int stock, const QString &category) {
+void ProductModel::addProduct(const QString&name,
+                              const QString& desc,
+                              double price,
+                              int stock,
+                              const QString& category,
+                              const QString&imagePath) {
     beginInsertRows(QModelIndex(), rowCount(), rowCount());
 
     Product *product = nullptr;
     if (category == "图书") {
-        product = new Book(name, desc, price, stock);
+        product = new Book(name, desc, price, stock, imagePath);
     } else if (category == "服装") {
-        product = new Clothing(name, desc, price, stock);
+        product = new Clothing(name, desc, price, stock, imagePath);
     } else if (category == "食品") {
-        product = new Food(name, desc, price, stock);
+        product = new Food(name, desc, price, stock, imagePath);
     }
 
     if (product) {
@@ -122,10 +130,16 @@ void ProductModel::updateProduct(int index, const QString &name, const QString &
 void ProductModel::copyImage(const QString& srcPath, const QString& destPath) {
     QString cleanSrc = srcPath;
     cleanSrc.replace("file:///", ""); // 移除 URL 前缀
+    if(cleanSrc.startsWith("/")) {
+        cleanSrc = cleanSrc.mid(1);
+    }
     QFile src(cleanSrc);
 
     QString cleanDest = destPath;
     cleanDest.replace("file:///", ""); // 移除目标路径前缀
+    if(cleanDest.startsWith("/")) {
+        cleanDest = cleanDest.mid(1);
+    }
     QFileInfo destInfo(cleanDest);
 
     // 确保目标目录存在

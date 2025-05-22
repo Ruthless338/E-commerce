@@ -79,11 +79,10 @@ QList<Product*> FileManager::loadProducts(){
         QString imagePath = obj["imagePath"].toString();
 
         Product* product = nullptr;
-        if (category == "图书") product = new Book(name, desc, price, stock);
-        else if (category == "服装") product = new Clothing(name, desc, price, stock);
-        else if (category == "食品") product = new Food(name, desc, price, stock);
+        if (category == "图书") product = new Book(name, desc, price, stock, imagePath);
+        else if (category == "服装") product = new Clothing(name, desc, price, stock, imagePath);
+        else if (category == "食品") product = new Food(name, desc, price, stock, imagePath);
         if (product) {
-            product->setImagePath(imagePath); // 设置图片路径
             products.append(product);
         }
     }
