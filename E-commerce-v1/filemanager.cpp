@@ -89,7 +89,7 @@ QList<Product*> FileManager::loadProducts(){
     return products;
 }
 
-void FileManager::saveUser(const User* user)
+bool FileManager::saveUser(const User* user)
 {
     QMap<QString, User*> existingUsers = loadAllUsers();
     // 删除同名用户
@@ -106,7 +106,7 @@ void FileManager::saveUser(const User* user)
         newUser = new Merchant(user->getUsername(), user->getPassword(), user->getBalance());
     } else {
         qDebug() << "未知用户类型：" << type;
-        return ;
+        return false;
     }
     existingUsers.insert(username, newUser);
 
@@ -129,13 +129,14 @@ void FileManager::saveUser(const User* user)
     QFile file("D:/Qt_projects/E-commerce/E-commerce-v1/data/users.json");
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         qDebug() << "无法写入 users.json" << file.errorString();
-        return;
+        return false;
     }
     file.write(QJsonDocument(jsonArray).toJson());
     file.close();
+    return true;
 }
 
-void FileManager::saveProducts(const QList<Product*>& products){
+bool FileManager::saveProducts(const QList<Product*>& products){
     QJsonObject root;
     QJsonObject categories;
     categories["图书"] = Book::discount;
@@ -148,7 +149,7 @@ void FileManager::saveProducts(const QList<Product*>& products){
         QJsonObject obj;
         obj["name"] = product->getName();
         obj["description"] = product->getDescription();
-        obj["price"] = product->getPrice();
+        obj["price"] = product->getBasePrice();
         obj["stock"] = product->getStock();
         obj["category"] = product->getCategory();
         obj["imagePath"] = product->getImagePath();
@@ -159,9 +160,10 @@ void FileManager::saveProducts(const QList<Product*>& products){
     QFile file("D:/Qt_projects/E-commerce/E-commerce-v1/data/products.json");
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         qDebug() << "无法写入 products.json";
-        return;
+        return false;
     }
     file.write(QJsonDocument(root).toJson());
     file.close();
+    return true;
 }
 

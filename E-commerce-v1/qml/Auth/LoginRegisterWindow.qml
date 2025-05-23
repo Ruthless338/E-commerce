@@ -16,11 +16,34 @@ Dialog
     y: (parent.height - height) / 2
     modal: true
 
+    Timer {
+        id: closeTimer
+        interval: 1500
+        onTriggered: {
+            loginRegisterDialog.visible = false
+        }
+    }
+    onVisibleChanged: {
+        if(visible) {
+            tfUsername.text = ""
+            tfPassword.text = ""
+            operationStatus.text = ""
+            operationStatus.visible = false
+        }
+    }
+
     ColumnLayout
     {
         anchors.fill: parent
         anchors.margins: 30
         spacing: 15
+
+        Label {
+            id: operationStatus
+            color: "green"
+            visible: false
+            Layout.alignment: Qt.AlignHCenter
+        }
 
         RowLayout {
             Label { text: "用户类型：" }
@@ -81,11 +104,15 @@ Dialog
                     // console.log("用户类型：", userType);
                     // console.log("全局状态：", JSON.stringify(global));
                     if(User.verifyLogin(tfUsername.text, tfPassword.text)) {
-                        lblMessage.text = "登录成功！";
                         loginRegisterDialog.loginSuccess({username: tfUsername.text, type: userType});
-                        Qt.callLater(() => close());
+                        operationStatus.text = "登录成功！";
+                        operationStatus.color = "green";
+                        operationStatus.visible = true;
+                        closeTimer.start();
                     } else {
-                        lblMessage = "用户名或密码错误";
+                        operationStatus.text = "用户名或密码错误";
+                        operationStatus.color = "red";
+                        operationStatus.visible = true;
                     }
                 } else {
                     // 调用C++注册逻辑
@@ -97,13 +124,16 @@ Dialog
                     }
                     var res = User.registerUser(tfUsername.text, tfPassword.text, userType, 0.0);
                     if (res.success) {
-                        lblMessage.text = "注册成功! 2秒后自动登录";
+                        operationStatus.text = "注册成功！已登录";
+                        operationStatus.color = "green";
+                        operationStatus.visible = true;
                         rbLogin.checked = true;
-                        setTimeout(() => {
-                            loginRegisterDialog.loginSuccess({username: tfUsername.text, type:userType});
-                            close();
-                        }, 2000);
+                        loginRegisterDialog.loginSuccess({username: tfUsername.text, type:userType});
+                        closeTimer.start();
                     } else {
+                        operationStatus.text = "注册失败！用户名已存在";
+                        operationStatus.color = "red";
+                        operationStatus.visible = true;
                         lblMessage.text = res.error;
                     }
                 }

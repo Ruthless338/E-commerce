@@ -9,8 +9,32 @@ Dialog {
     visible: false
     parent: Overlay.overlay
     anchors.centerIn: parent
+    width: 500
 
     property string selectedImagePath: ""
+    property bool isAdding: false
+
+    Timer {
+        id: closeTimer
+        interval: 1500
+        onTriggered: {
+            addProductDialog.visible = false;
+            isAdding = false;
+        }
+    }
+
+    onVisibleChanged: {
+        if(visible) {
+            operationStatus.text = "";
+            operationStatus.visible = false;
+            pName.text = "";
+            pDesc.text = "";
+            pPrice.text = "";
+            pStock.text = "";
+            pCategory.currentIndex = 0;
+            selectedImagePath = "";
+        }
+    }
 
     ColumnLayout {
         Label {
@@ -20,10 +44,30 @@ Dialog {
             Layout.alignment: Qt.AlignHCenter
         }
 
-        TextField { id: pName; placeholderText: "商品名称" }
-        TextField { id: pDesc; placeholderText: "商品描述" }
-        TextField { id: pPrice; placeholderText: "价格" }
-        TextField { id: pStock; placeholderText: "库存" }
+        TextField {
+            id: pName
+            placeholderText: "商品名称"
+            Layout.fillWidth: true
+            Layout.preferredWidth: 450
+        }
+        TextField {
+            id: pDesc
+            placeholderText: "商品描述"
+            Layout.fillWidth: true
+            Layout.preferredWidth: 450
+        }
+        TextField {
+            id: pPrice
+            placeholderText: "价格"
+            Layout.fillWidth: true
+            Layout.preferredWidth: 450
+        }
+        TextField {
+            id: pStock
+            placeholderText: "库存"
+            Layout.fillWidth: true
+            Layout.preferredWidth: 450
+        }
         ComboBox {
             id: pCategory;
             model: ["图书","服装","食品"]
@@ -69,9 +113,12 @@ Dialog {
 
         RowLayout {
             Layout.alignment: Qt.AlignRight
-            spacing: 10
+            spacing: 15
+            Layout.topMargin: 20
             Button {
                 text: "提交"
+                Layout.preferredWidth: 120
+                Layout.preferredHeight: 40
                 onClicked: {
                     if (addProductDialog.selectedImagePath === "") {
                         console.error("未选择图片");
@@ -85,12 +132,11 @@ Dialog {
                     var decodedPath = addProductDialog.selectedImagePath;
                     var fileName = decodedPath.split("/").pop();
 
-                    // 修复目录拼写错误
                     var destDir = "D:/Qt_projects/E-commerce/E-commerce-v1/images";
                     var imagePath = destDir + "/" + fileName;
 
                     console.log("即将保存文件至：" + imagePath);
-                    productModel.addProduct(
+                    var res = productModel.addProduct(
                         pName.text,
                         pDesc.text,
                         parseFloat(pPrice.text),
@@ -98,13 +144,22 @@ Dialog {
                         pCategory.currentText,
                         imagePath
                     );
-                    operationStatus.text = "商品添加成功！";
-                    operationStatus.color = "green";
-                    Qt.setTimeout(() => addProductDialog.visible = false, 1500);
+                    if(res) {
+                        operationStatus.text = "商品添加成功！";
+                        operationStatus.color = "green";
+                        closeTimer.start();
+                    } else {
+                        operationStatus.text = "商品添加失败，请检查数据";
+                        opetationStatus.color = "red";
+                        isAdding = false;
+                    }
+                    operationStatus.visible = true;
                 }
             }
             Button {
                 text: "取消"
+                Layout.preferredWidth: 120
+                Layout.preferredHeight: 40
                 onClicked: {
                     addProductDialog.visible = false
                 }

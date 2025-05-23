@@ -8,18 +8,34 @@
         {
             "category": "图书",
             "description": "1",
-            "imagePath": "D:/Qt_projects/E-commerce/E-commerce-v1/images/1.jpg",
-            "name": "1",
-            "price": 80,
-            "stock": 100
+            "imagePath": "D:/Qt_projects/E-commerce/E-commerce-v1/images/西2.jpg",
+            "name": "11111",
+            "price": 1,
+            "stock": 1
         },
         {
             "category": "图书",
-            "description": "22222222222222",
-            "imagePath": "D:/Qt_projects/E-commerce/E-commerce-v1/images/2.jpg",
-            "name": "2",
-            "price": 0.6553600000000003,
-            "stock": 2
+            "description": "11",
+            "imagePath": "D:/Qt_projects/E-commerce/E-commerce-v1/images/西3.jpg",
+            "name": "11",
+            "price": 12,
+            "stock": 10
+        },
+        {
+            "category": "图书",
+            "description": "111",
+            "imagePath": "D:/Qt_projects/E-commerce/E-commerce-v1/images/6.jpg",
+            "name": "111",
+            "price": 111,
+            "stock": 111
+        },
+        {
+            "category": "图书",
+            "description": "中国四大名著之一",
+            "imagePath": "D:/Qt_projects/E-commerce/E-commerce-v1/images/111.jpg",
+            "name": "西游记",
+            "price": 100,
+            "stock": 99
         }
     ]
 }

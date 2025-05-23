@@ -18,6 +18,10 @@ bool GlobalState::isMerchant() const {
     return m_isMerchant;
 }
 
+double GlobalState::balance() const {
+    return m_balance;
+}
+
 void GlobalState::setUsername(const QString &username) {
     if (m_username != username) {
         m_username = username;
@@ -44,4 +48,13 @@ void GlobalState::setIsMerchant(bool isMerchant) {
         m_isMerchant = isMerchant;
         emit isMerchantChanged();
     }
+}
+
+void GlobalState::setBalance(double balance) {
+    if(qFuzzyCompare(m_balance, balance)) {
+        return ;
+    }
+
+    m_balance = balance;
+    emit balanceChanged();
 }

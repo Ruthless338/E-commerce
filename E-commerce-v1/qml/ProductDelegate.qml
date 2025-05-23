@@ -3,6 +3,7 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import "./" as Components
+import ECommerce.Core 1.0
 
 Rectangle
 {
@@ -11,6 +12,19 @@ Rectangle
     color: index % 2 ? "#f0f0f0" : "white"
 
     signal editRequested(var productData)
+
+    Label {
+        id: operationStatus
+        color: "red"
+        visible: false
+        Layout.alignment: Qt.AlignHCenter
+    }
+
+    Timer {
+        id: operationTimer
+        interval: 2000
+        onTriggered: operationStatus.visible = false
+    }
 
     RowLayout
     {
@@ -35,6 +49,8 @@ Rectangle
                 font.bold: true
                 font.pixelSize: 16
                 elide: Text.ElideRight // 文本过长时省略
+                Layout.fillWidth: true
+                horizontalAlignment: Text.AlignLeft
             }
             Label {
                 text: model.description
@@ -42,11 +58,15 @@ Rectangle
                 color: "#666"
                 wrapMode: Text.Wrap // 允许换行
                 Layout.maximumWidth: 300 // 限制宽度
+                Layout.fillWidth: true
+                horizontalAlignment: Text.AlignLeft
             }
             Label {
                 text: "库存：" + model.stock
                 font.pixelSize: 12
                 color: "#444"
+                Layout.fillWidth: true
+                horizontalAlignment: Text.AlignLeft
             }
         }
 
@@ -91,6 +111,22 @@ Rectangle
                         price: model.price,
                         stock: model.stock
                     });
+                }
+            }
+
+            Button {
+                text: "购买"
+                visible: global.isConsumer
+                Layout.alignment: Qt.AlignRight
+                onClicked: {
+                    if(productModel.purchaseProduct(index, global.username)) {
+                        global.balance = AuthManager.getBalance(global.username);
+                        operationStatus.text = "购买成功！";
+                    } else {
+                        operationStatus.text = "购买失败，余额不足或库存不足";
+                    }
+                    operationStatus.visible = true
+                    operationTimer.start();
                 }
             }
         }

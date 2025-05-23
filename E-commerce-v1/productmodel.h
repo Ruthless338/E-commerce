@@ -4,6 +4,7 @@
 #include <QAbstractListModel>
 #include <QList>
 #include "product.h"
+#include "authmanager.h"
 
 class ProductModel : public QAbstractListModel
 {
@@ -32,17 +33,23 @@ public:
     QHash<int, QByteArray> roleNames() const override;
 
     // 添加商品
-    Q_INVOKABLE void addProduct(const QString &name, const QString &desc, double price, int stock, const QString &category, const QString& imagePath);
+    Q_INVOKABLE bool addProduct(const QString &name, const QString &desc, double price, int stock, const QString &category, const QString& imagePath);
     // 搜索商品
-    Q_INVOKABLE void search(const QString &keyword);
+    Q_INVOKABLE void search(
+        const QString &keyword,
+        int searchType,
+        const QString& minPrice,
+        const QString& maxPrice
+    );
     // 重置搜索
     Q_INVOKABLE void resetSearch();
 
     // 加载/保存商品数据到文件  数据持久化
     void loadProducts();
-    void saveProducts();
+    bool saveProducts();
     // 更新商品数据
-    Q_INVOKABLE void updateProduct(int index, const QString &name, const QString &desc, double price, int stock);
+    Q_INVOKABLE bool updateProduct(int index, const QString &name, const QString &desc, double price, int stock, const QString& imagePath);
+    Q_INVOKABLE bool purchaseProduct(int index, const QString& username);
 public slots:
     void copyImage(const QString& srcPath, const QString& destPath);
     void setCategoryDiscount(const QString& category, double discount);

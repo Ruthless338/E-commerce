@@ -7,20 +7,44 @@ import QtQuick.Dialogs
 Dialog {
     id: editDialog
     title: "编辑商品"
+    parent: Overlay.overlay
     anchors.centerIn: parent
     visible: false
-    width: 400
+    width: 500
+
     property var productData: ({})
+    property string selectedImagePath: ""
+
+    Timer {
+        id: closeTimer
+        interval: 1500
+        onTriggered: {
+            operationStatus.visible = false;
+        }
+    }
+
+    onVisibleChanged: {
+        if (visible) {
+            operationStatus.text = "";
+            operationStatus.visible = false;
+            selectedImagePath = ""
+        }
+    }
 
     ColumnLayout {
-        anchors.fill: parent
-        spacing: 10
+        Label {
+            id: operationStatus
+            color: "green"
+            visible: false
+            Layout.alignment: Qt.AlignHCenter
+        }
 
         TextField {
             id: editName
             text: productData.name || ""
             placeholderText: "商品名称"
             Layout.fillWidth: true
+            Layout.preferredWidth: 450
         }
 
         TextField {
@@ -28,6 +52,7 @@ Dialog {
             text: productData.description || ""
             placeholderText: "商品描述"
             Layout.fillWidth: true
+            Layout.preferredWidth: 450
         }
 
         TextField {
@@ -36,6 +61,7 @@ Dialog {
             placeholderText: "价格"
             validator: DoubleValidator { bottom: 0 }
             Layout.fillWidth: true
+            Layout.preferredWidth: 450
         }
 
         TextField {
@@ -44,16 +70,19 @@ Dialog {
             placeholderText: "库存"
             validator: IntValidator { bottom: 0 }
             Layout.fillWidth: true
+            Layout.preferredWidth: 450
         }
 
         Button {
             text: "更换图片"
             onClicked: fileDialog.open()
+            Layout.fillWidth: true
         }
-        Image {
-            source: productData.ImagePath || ""
-            Layout.preferredHeight: 100
+        Label {
+            text: "已选择图片:" + (editDialog.selectedImagePath || "无")
+            Layout.fillWidth: true
         }
+
         FileDialog {
             id: fileDialog
             onAccepted: {
@@ -76,6 +105,7 @@ Dialog {
                     Qt.callLater(() => {
                         productModel.copyImage(decodedPath, destPath);
                     });
+                    selectedImagePath = destPath;
                 } else {
                     console.error("未选择文件");
                 }
@@ -83,24 +113,46 @@ Dialog {
         }
 
         RowLayout {
-            spacing: 10
+            Layout.topMargin: 20
+            spacing: 15
+            Layout.alignment: Qt.AlignHCenter
             Button {
                 text: "保存"
+                Layout.preferredWidth: 120
+                Layout.preferredHeight: 40
                 onClicked: {
+                    var imagePath = editDialog.selectedImagePath || productData.ImagePath;
+
                     // 仅提交用户修改的字段，未修改的保持原值
-                    productModel.updateProduct(
+                    var res = productModel.updateProduct(
                         productData.id,
                         editName.text !== productData.name ? editName.text : productData.name,
                         editDesc.text !== productData.description ? editDesc.text : productData.description,
                         editPrice.text !== productData.price.toFixed(2) ? parseFloat(editPrice.text) : productData.price,
-                        editStock.text !== productData.stock.toString() ? parseInt(editStock.text) : productData.stock
+                        editStock.text !== productData.stock.toString() ? parseInt(editStock.text) : productData.stock,
+                        imagePath
                     );
-                    Toast.show("商品信息已更新", 1500, "#4CAF50");
-                    editDialog.visible = false;
+
+                    if (res) {
+                        operationStatus.text = "✓ 商品信息已保存";
+                        operationStatus.color = "#4CAF50";
+                        closeTimer.start();
+                    } else {
+                        operationStatus.text = "❗ 保存失败，请检查数据";
+                        operationStatus.color = "#f44336";
+                    }
+                    operationStatus.visible = true;
+
+                    // 延迟关闭对话框
+                    Qt.callLater(() => {
+                        editDialog.visible = false;
+                    });
                 }
             }
             Button {
                 text: "取消"
+                Layout.preferredWidth: 120
+                Layout.preferredHeight: 40
                 onClicked: editDialog.visible = false;
             }
         }

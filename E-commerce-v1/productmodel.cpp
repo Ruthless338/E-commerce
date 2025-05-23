@@ -55,13 +55,20 @@ QHash<int, QByteArray> ProductModel::roleNames() const {
     return m_roleNames;
 }
 
-void ProductModel::addProduct(const QString&name,
+bool ProductModel::addProduct(const QString&name,
                               const QString& desc,
                               double price,
                               int stock,
                               const QString& category,
-                              const QString&imagePath) {
-    beginInsertRows(QModelIndex(), rowCount(), rowCount());
+                              const QString& imagePath) {
+    if(name.isEmpty()||desc.isEmpty()||price<0||stock<0||imagePath.isEmpty()) {
+        qDebug() << "无效商品参数";
+        return false;
+    }
+    if(category!="图书"&&category!="服装"&&category!="食品"){
+        qDebug() << "无效商品种类" << category;
+        return false;
+    }
 
     Product *product = nullptr;
     if (category == "图书") {
@@ -72,20 +79,49 @@ void ProductModel::addProduct(const QString&name,
         product = new Food(name, desc, price, stock, imagePath);
     }
 
-    if (product) {
-        m_products.append(product);
-        m_allProducts.append(product);
-        saveProducts();
+    if(!product) {
+        qDebug() << "添加商品失败：无法为product分配内存";
+        return false;
     }
 
+    beginInsertRows(QModelIndex(), rowCount(), rowCount());
+    m_products.append(product);
+    m_allProducts.append(product);
     endInsertRows();
+
+    if(!saveProducts()) {
+        qDebug() << "添加商品：保存商品至文件失败";
+        return false;
+    }
+    return true;
 }
 
-void ProductModel::search(const QString &keyword) {
+void ProductModel::search(
+    const QString &keyword,
+    int searchType,
+    const QString& minPrice,
+    const QString& maxPrice
+    ) {
     // 此处需触发数据变化信号（如layoutChanged）
     QList<Product*> filtered;
+
+    double mi = minPrice.isEmpty() ? 0 : minPrice.toDouble();
+    double ma = maxPrice.isEmpty() ? std::numeric_limits<double>::max() : maxPrice.toDouble();
+
     for (Product * product : m_allProducts) {
-        if(product->getName().contains(keyword, Qt::CaseInsensitive)) {
+        double currentPrice = product->getPrice();
+        if(currentPrice < mi || currentPrice > ma) continue;
+
+        bool match = false;
+        switch(searchType) {
+        case 0:
+            match = product->getName().contains(keyword, Qt::CaseInsensitive);
+            break;
+        case 1:
+            match = product->getDescription().contains(keyword, Qt::CaseInsensitive);
+            break;
+        }
+        if(match || keyword.isEmpty()) {
             filtered.append(product);
         }
     }
@@ -112,19 +148,22 @@ void ProductModel::loadProducts() {
     endResetModel();
 }
 
-void ProductModel::saveProducts() {
-    FileManager::saveProducts(m_allProducts);
+bool ProductModel::saveProducts() {
+    return FileManager::saveProducts(m_allProducts);
 }
 
-void ProductModel::updateProduct(int index, const QString &name, const QString &desc, double price, int stock){
-    if (index < 0 || index >= m_allProducts.size()) return ;
+bool ProductModel::updateProduct(int index, const QString &name, const QString &desc, double price, int stock, const QString& imagePath){
+    if (index < 0 || index >= m_allProducts.size()) return false;
     Product *product = m_allProducts.at(index);
     if(!name.isEmpty()) product->setName(name);
     if(!desc.isEmpty()) product->setDescription(desc);
     if(price >= 0) product->setPrice(price);
     if(stock >= 0) product->setStock(stock);
-    saveProducts();
+    if(!imagePath.isEmpty()) product->setImagePath(imagePath);
+    bool res = saveProducts();
     emit dataChanged(createIndex(index, 0), createIndex(index, 0));
+    qDebug() << "商品更新成功";
+    return res;
 }
 
 void ProductModel::copyImage(const QString& srcPath, const QString& destPath) {
@@ -173,5 +212,32 @@ void ProductModel::setCategoryDiscount(const QString& category, double discount)
         emit dataChanged(top, bottom, {PriceRole, DiscountRole});
     }
     saveProducts();
+}
+
+bool ProductModel::purchaseProduct(int index, const QString& username) {
+    if(index < 0 || index >= m_products.size()) return false;
+    Product* product = m_products.at(index);
+
+    if(product->getStock()<1) {
+        qDebug() << "库存不足";
+        return false;
+    }
+
+    double currentPrice = product->getPrice();
+    if(AuthManager::getBalance(username) < currentPrice) {
+        qDebug() << "余额不足";
+        return false;
+    }
+
+    product->setStock(product->getStock() - 1);
+    if(!AuthManager::deductBalance(username, currentPrice)) {
+        qDebug() << "扣款失败";
+        return false;
+    }
+
+    emit dataChanged(createIndex(index, 0), createIndex(index, 0));
+    saveProducts();
+
+    return true;
 }
 

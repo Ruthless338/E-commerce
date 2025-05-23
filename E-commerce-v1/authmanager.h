@@ -20,6 +20,9 @@ public:
                                            const QString &newPwd);
     Q_INVOKABLE static bool verifyPassword(const QString &username,
                                            const QString &pwd);
+    Q_INVOKABLE static bool recharge(const QString& username, double amount);
+    Q_INVOKABLE static double getBalance(const QString& username);
+    Q_INVOKABLE static bool deductBalance(const QString& username, double amout);
 };
 
 #endif // AUTHMANAGER_H

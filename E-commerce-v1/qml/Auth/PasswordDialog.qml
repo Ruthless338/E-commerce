@@ -16,9 +16,34 @@ Dialog {
 
     property string username: global.username
 
+    Timer {
+        id: closeTimer
+        interval: 2000
+        onTriggered: {
+            passwordDialog.visible = false;
+        }
+    }
+
+    onVisibleChanged: {
+        if(visible) {
+            tfCurrentPwd.text = ""
+            tfNewPwd.text = ""
+            tfConfirmPwd.text = ""
+            operationStatus.text = ""
+            operationStatus.visible = false
+        }
+    }
+
     ColumnLayout {
         anchors.fill: parent
         spacing: 15
+
+        Label {
+            id: operationStatus
+            color: "green"
+            visible: false
+            Layout.alignment: Qt.AlignHCenter
+        }
 
         // 当前密码
         TextField {
@@ -72,12 +97,19 @@ Dialog {
                 Material.foreground: "white"
                 onClicked: {
                     if (AuthManager.changePassword(username, tfCurrentPwd.text, tfNewPwd.text)) {
-                        lblMessage.text = "密码修改成功";
-                        lblMessage.color = "green";
-                        Qt.callLater(() => passwordDialog.visible = false);
+                        // lblMessage.text = "密码修改成功";
+                        // lblMessage.color = "green";
+                        // Qt.callLater(() => passwordDialog.visible = false);
+                        operationStatus.text = "密码修改成功";
+                        operationStatus.color = "green";
+                        operationStatus.visible = true;
+                        closeTimer.start();
                     } else {
-                        lblMessage.text = "密码修改失败";
-                        lblMessage.color = "red";
+                        // lblMessage.text = "密码修改失败";
+                        // lblMessage.color = "red";
+                        operationStatus.text = "密码修改失败";
+                        operationStatus.visible = true;
+                        operationStatus.color = "red";
                     }
                 }
             }

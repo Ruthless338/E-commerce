@@ -26,3 +26,27 @@ bool AuthManager::verifyPassword(const QString &username,
     QMap<QString, User*> users = FileManager::loadAllUsers();
     return users[username] && users[username]->verifyPassword(pwd);
 }
+
+bool AuthManager::recharge(const QString& username, double amount) {
+    QMap<QString, User*> users = FileManager::loadAllUsers();
+    if(!users.contains(username)) return false;
+
+    users[username]->updateBalance(amount);
+    return FileManager::saveUser(users[username]);
+}
+
+double AuthManager::getBalance(const QString& username) {
+    QMap<QString, User*> users = FileManager::loadAllUsers();
+    return users.contains(username) ? users[username]->getBalance() : 0.0;
+}
+
+bool AuthManager::deductBalance(const QString& username, double amount){
+    QMap<QString, User*> users = FileManager::loadAllUsers();
+    if(!users.contains(username)) return false;
+
+    if(users[username]->getBalance() < amount) return false;
+
+    users[username]->updateBalance(-amount);
+    return FileManager::saveUser(users[username]);
+}
+

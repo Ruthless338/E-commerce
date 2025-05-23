@@ -21,8 +21,8 @@ public:
     static QMap<QString, User*> loadAllUsers();
     static QList<Product*> loadProducts();
     static bool userExist(const QString& username);
-    static void saveUser(const User* user);
-    static void saveProducts(const QList<Product*>& products);
+    static bool saveUser(const User* user);
+    static bool saveProducts(const QList<Product*>& products);
 };
 
 #endif // FILEMANAGER_H

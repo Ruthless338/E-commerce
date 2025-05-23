@@ -1,4 +1,6 @@
 // Toast.qml
+
+// 暂时搁置的提示框组件，待debug
 import QtQuick 2.15
 
 Rectangle {
@@ -11,6 +13,7 @@ Rectangle {
     anchors.centerIn: Overlay.overlay
 
     Text {
+        id: toastText
         anchors.centerIn: parent
         color: "white"
         text: ""
@@ -23,8 +26,6 @@ Rectangle {
         timer.interval = duration;
         timer.start();
     }
-
-    Text { id: toastText }
 
     Timer {
         id: timer

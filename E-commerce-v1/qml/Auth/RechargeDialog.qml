@@ -2,6 +2,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import ECommerce.Core 1.0
 
 Dialog {
     id: rechargeDialog
@@ -14,6 +15,12 @@ Dialog {
     anchors.centerIn: parent
 
     property string username: global.username
+
+    Label {
+        text: "当前余额：￥" + global.balance.toFixed(2)
+        color: "green"
+        Layout.alignment: Qt.AlignHCenter
+    }
 
     ColumnLayout {
         anchors.fill: parent
@@ -58,10 +65,13 @@ Dialog {
                 onClicked: {
                     if (validateInput()) {
                         const amount = parseFloat(tfAmount.text)
-                        User.updateBalance(username, amount)
-                        global.balance = User.getBalance(username)
-                        lblMessage.text = "成功充值 ¥" + amount.toFixed(2)
-                        Qt.callLater(rechargeDialog.close)
+                        if(AuthManager.recharge(username, amount)) {
+                            global.balance = AuthManager.getBalance(username)
+                            lblMessage.text = "成功充值 ¥" + amount.toFixed(2)
+                            Qt.callLater(rechargeDialog.close)
+                        } else {
+                            lblMessage.text = "充值失败"
+                        }
                     }
                 }
             }
