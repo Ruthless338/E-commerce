@@ -20,7 +20,8 @@ public:
         DiscountRole,
         CurrentPriceRole,
         MerchantUsernameRole,
-        ImagePathRole
+        ImagePathRole,
+        ProductPointerRole = Qt::UserRole + 10
     };
 
     explicit ProductModel(QObject *parent = nullptr);
@@ -51,6 +52,12 @@ public:
     // 更新商品数据
     Q_INVOKABLE bool updateProduct(int index, const QString &name, const QString &desc, double price, int stock, const QString& imagePath);
     Q_INVOKABLE bool purchaseProduct(int index, const QString& username);
+
+    Product* findProduct(const QString& name) const;
+    Product* findProductByNameAndMerchant(const QString& name, const QString& merchantUsername) const;
+
+    static ProductModel* instance();
+    Q_INVOKABLE void forceViewRefresh();
 public slots:
     void copyImage(const QString& srcPath, const QString& destPath);
     void setCategoryDiscount(const QString& category, double discount);
@@ -58,6 +65,8 @@ private:
     QList<Product*> m_products;  // 当前显示的商品（过滤后）
     QList<Product*> m_allProducts; // 存储所有商品
     QHash<int, QByteArray> m_roleNames;  // 角色定义
+
+    static ProductModel* m_instance;
 };
 
 #endif // PRODUCTMODEL_H

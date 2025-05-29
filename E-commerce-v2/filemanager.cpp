@@ -3,7 +3,7 @@
 QMap<QString, User*> FileManager::loadAllUsers()
 {
     QMap<QString, User*> users;
-    QFile file("D:/Qt_projects/E-commerce/E-commerce-v1/data/users.json");
+    QFile file("D:/Qt_projects/E-commerce/E-commerce-v2/data/users.json");
     //处理打开失败
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
@@ -58,7 +58,7 @@ bool FileManager::userExist(const QString& username){
 
 QList<Product*> FileManager::loadProducts(){
     QList<Product*> products;
-    QFile file("D:/Qt_projects/E-commerce/E-commerce-v1/data/products.json");
+    QFile file("D:/Qt_projects/E-commerce/E-commerce-v2/data/products.json");
     if (!file.open(QIODevice::ReadOnly)) return products;
 
     QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
@@ -122,7 +122,7 @@ bool FileManager::saveUser(const User* user)
     }
 
     // 写入文件
-    QFile file("D:/Qt_projects/E-commerce/E-commerce-v1/data/users.json");
+    QFile file("D:/Qt_projects/E-commerce/E-commerce-v2/data/users.json");
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         qDebug() << "无法写入 users.json" << file.errorString();
         return false;
@@ -149,11 +149,12 @@ bool FileManager::saveProducts(const QList<Product*>& products){
         obj["stock"] = product->getStock();
         obj["category"] = product->getCategory();
         obj["imagePath"] = product->getImagePath();
+        obj["merchantUsername"] = product->getMerchantUsername();
         productArray.append(obj);
     }
     root["products"] = productArray;
 
-    QFile file("D:/Qt_projects/E-commerce/E-commerce-v1/data/products.json");
+    QFile file("D:/Qt_projects/E-commerce/E-commerce-v2/data/products.json");
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         qDebug() << "无法写入 products.json";
         return false;
@@ -163,3 +164,94 @@ bool FileManager::saveProducts(const QList<Product*>& products){
     return true;
 }
 
+bool FileManager::saveShoppingCarts(const QVariantMap& allCarts) {
+    QFile file("D:/Qt_projects/E-commerce/E-commerce-v2/data/shoppingCart.json");
+    if (!file.open(QIODevice::WriteOnly)) return false;
+
+    QJsonObject root;
+    for (auto userIt = allCarts.begin(); userIt != allCarts.end(); ++userIt) {
+        QString username = userIt.key();
+        QVariantMap userCart = userIt.value().toMap();
+        QJsonObject userCartJson;
+        for (auto itemIt = userCart.begin(); itemIt != userCart.end(); ++itemIt) {
+            userCartJson[itemIt.key()] = itemIt.value().toInt();
+        }
+        root[username] = userCartJson;
+    }
+
+    QJsonDocument doc(root);
+    file.write(doc.toJson());
+    return true;
+}
+
+QVariantMap FileManager::loadAllShoppingCarts() {
+    QFile file("D:/Qt_projects/E-commerce/E-commerce-v2/data/shoppingCart.json");
+    QVariantMap allCarts;
+    if (file.open(QIODevice::ReadOnly)) {
+        QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
+        QJsonObject root = doc.object();
+        for (auto userIt = root.begin(); userIt != root.end(); ++userIt) {
+            QString username = userIt.key();
+            QJsonObject userCartJson = userIt.value().toObject();
+            QVariantMap userCart;
+            for (auto itemIt = userCartJson.begin(); itemIt != userCartJson.end(); ++itemIt) {
+                userCart[itemIt.key()] = itemIt.value().toInt();
+            }
+            allCarts[username] = userCart;
+        }
+    }
+    return allCarts;
+}
+
+// 保存订单数据
+bool FileManager::saveOrders(const QList<Order*>& orders) {
+    QFile file("D:/Qt_projects/E-commerce/E-commerce-v2/data/order.json");
+    if (!file.open(QIODevice::WriteOnly)) return false;
+
+    QJsonArray orderArray;
+    for (Order* order : orders) {
+        QJsonObject orderObj;
+        orderObj["consumer"] = order->getConsumerUsername();
+        QJsonArray itemsArray;
+        for (auto& item : order->getProductIdentifiers()) {
+            QJsonObject itemObj;
+            itemObj["product"] = item.first;
+            itemObj["merchant"] = item.second;
+            itemsArray.append(itemObj);
+        }
+        orderObj["items"] = itemsArray;
+        orderArray.append(orderObj);
+    }
+
+    QJsonDocument doc(orderArray);
+    file.write(doc.toJson());
+    return true;
+}
+
+// 加载订单数据
+QList<Order*> FileManager::loadOrders(const QList<Product*>& allProducts) {
+    QList<Order*> orders;
+    QFile file("D:/Qt_projects/E-commerce/E-commerce-v2/data/order.json");
+    if (file.open(QIODevice::ReadOnly)) {
+        QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
+        QJsonArray orderArray = doc.array();
+        for (const QJsonValue& orderVal : orderArray) {
+            QJsonObject orderObj = orderVal.toObject();
+            QString consumer = orderObj["consumer"].toString();
+            QJsonArray itemsArray = orderObj["items"].toArray();
+
+            QList<QPair<QString, QString>> identifiers;
+            for (const QJsonValue& itemVal : itemsArray) {
+                QJsonObject itemObj = itemVal.toObject();
+                identifiers.append(qMakePair(
+                    itemObj["product"].toString(),
+                    itemObj["merchant"].toString()
+                    ));
+            }
+
+            Order* order = new Order(consumer, identifiers, allProducts);
+            orders.append(order);
+        }
+    }
+    return orders;
+}

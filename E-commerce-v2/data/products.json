@@ -1,0 +1,27 @@
+{
+    "categories": {
+        "图书": 0.8,
+        "服装": 1,
+        "食品": 1
+    },
+    "products": [
+        {
+            "category": "图书",
+            "description": "中国四大名著之一",
+            "imagePath": "D:/Qt_projects/E-commerce/E-commerce-v1/images/111.jpg",
+            "merchantUsername": "admin2",
+            "name": "西游记",
+            "price": 100,
+            "stock": 96
+        },
+        {
+            "category": "图书",
+            "description": "中国四大名著之一",
+            "imagePath": "D:/Qt_projects/E-commerce/E-commerce-v1/images/西2.jpg",
+            "merchantUsername": "admin2",
+            "name": "三国演义",
+            "price": 120,
+            "stock": 95
+        }
+    ]
+}

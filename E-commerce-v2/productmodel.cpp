@@ -4,7 +4,16 @@
 #include "clothing.h"
 #include "food.h"
 
+ProductModel* ProductModel::m_instance = nullptr;
+
+ProductModel* ProductModel::instance() {
+    return m_instance;
+}
+
 ProductModel::ProductModel(QObject *parent) : QAbstractListModel(parent) {
+    if(m_instance == nullptr) {
+        m_instance = this;
+    }
     // 初始化角色名称（与QML绑定）
     m_roleNames[NameRole] = "name";
     m_roleNames[DescriptionRole] = "description";
@@ -15,6 +24,7 @@ ProductModel::ProductModel(QObject *parent) : QAbstractListModel(parent) {
     m_roleNames[CurrentPriceRole] = "currentPrice";
     m_roleNames[ImagePathRole] = "imagePath";
     m_roleNames[MerchantUsernameRole] = "merchantUsername";
+    m_roleNames[ProductPointerRole] = "productPointer";
 
     // 加载初始商品数据
     loadProducts();
@@ -49,6 +59,8 @@ QVariant ProductModel::data(const QModelIndex &index, int role) const {
         return product->getImagePath();
     case MerchantUsernameRole:
         return product->getMerchantUsername();
+    case ProductPointerRole:
+        return QVariant::fromValue(product);
     default:
         return QVariant();
     }
@@ -65,7 +77,7 @@ bool ProductModel::addProduct(const QString&name,
                               const QString& category,
                               const QString& merchantUsername,
                               const QString& imagePath) {
-    if(name.isEmpty()||desc.isEmpty()||price<0||stock<0||imagePath.isEmpty()) {
+    if(name.isEmpty()||desc.isEmpty()||price<0||stock<0||imagePath.isEmpty()||merchantUsername.isEmpty()) {
         qDebug() << "无效商品参数";
         return false;
     }
@@ -241,7 +253,7 @@ bool ProductModel::purchaseProduct(int index, const QString& username) {
 
     QString merchantUsername = product->getMerchantUsername();
     if(!AuthManager::addBalance(merchantUsername, currentPrice)) {
-        qDebug() << "加款失败";
+        qDebug() << "商户:" <<merchantUsername<<"加款失败";
         return false;
     }
 
@@ -249,5 +261,24 @@ bool ProductModel::purchaseProduct(int index, const QString& username) {
     saveProducts();
 
     return true;
+}
+
+Product* ProductModel::findProduct(const QString& name) const {
+    for (Product* product : m_allProducts) {
+        if (product->getName() == name) {
+            return product;
+        }
+    }
+    return nullptr;
+}
+
+// 添加新的查找方法
+Product* ProductModel::findProductByNameAndMerchant(const QString& name, const QString& merchantUsername) const {
+    for (Product* product : m_allProducts) {
+        if (product->getName() == name && product->getMerchantUsername() == merchantUsername) {
+            return product;
+        }
+    }
+    return nullptr;
 }
 

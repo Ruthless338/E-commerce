@@ -1,14 +1,15 @@
 #ifndef PRODUCT_H
 #define PRODUCT_H
-#include<QString>
+#include <QString>
+#include <QObject>
 
-class Product
-{
+class Product {
 protected:
     QString name;
     QString description;
     double basePrice;
     int stock;
+    int frozenStock;
     QString category;
     QString imagePath;
     QString merchantUsername;
@@ -46,6 +47,10 @@ public:
     void setImagePath(const QString& path) { imagePath = path; }
     void setMerchantUsername(const QString& username) { merchantUsername = username; }
 
+    void freezeStock(int quantity) { frozenStock += quantity; }
+    void releaseStock(int quantity) { frozenStock -= quantity; }
+    int getAvailableStock() const { return stock - frozenStock; }
+    void deductStock(int quantity) { stock -= quantity; }
 };
 
 

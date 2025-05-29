@@ -1,23 +1,10 @@
 QT += quick \
-      quickcontrols2
+      quickcontrols2 \
+      core
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
-
-SOURCES += \
-        authmanager.cpp \
-        book.cpp \
-        clothing.cpp \
-        consumer.cpp \
-        filemanager.cpp \
-        food.cpp \
-        globalstate.cpp \
-        main.cpp \
-        merchant.cpp \
-        product.cpp \
-        productmodel.cpp \
-        user.cpp
 
 HEADERS += \
         authmanager.h \
@@ -29,14 +16,34 @@ HEADERS += \
         globalstate.h \
         main.h \
         merchant.h \
+        order.h \
+        ordermanager.h \
         product.h \
         productmodel.h \
+        shoppingcart.h \
         user.h
 
 
+SOURCES += \
+        authmanager.cpp \
+        book.cpp \
+        clothing.cpp \
+        consumer.cpp \
+        filemanager.cpp \
+        food.cpp \
+        globalstate.cpp \
+        main.cpp \
+        merchant.cpp \
+        order.cpp \
+        ordermanager.cpp \
+        product.cpp \
+        productmodel.cpp \
+        shoppingcart.cpp \
+        user.cpp
+
 RESOURCES += qml.qrc \
-             data.qrc \
              images.qrc \
+             data.qrc
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
 QML_IMPORT_PATH =
