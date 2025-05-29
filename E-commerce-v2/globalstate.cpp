@@ -1,6 +1,16 @@
 #include "globalstate.h"
 
-GlobalState::GlobalState(QObject *parent) : QObject(parent) {}
+GlobalState* GlobalState::m_instance = nullptr;
+
+GlobalState* GlobalState::instance() {
+    return m_instance;
+}
+
+GlobalState::GlobalState(QObject *parent) : QObject(parent) {
+    if(m_instance == nullptr) {
+        m_instance = this;
+    }
+}
 
 QString GlobalState::username() const {
     return m_username;

@@ -9,11 +9,16 @@
 class OrderManager : public QObject {
     Q_OBJECT
 public:
-    explicit OrderManager(QObject *parent = nullptr) : QObject(parent) {}
+    explicit OrderManager(QObject *parent = nullptr) : QObject(parent) {
+        loadOrders();
+    }
     
     Q_INVOKABLE QVariant createOrder(const QString& username, const QVariantList& items);
     Q_INVOKABLE bool payOrder(Order* order, const QString& consumerUsername);
     Q_INVOKABLE QList<Order*> getOrders() const { return orders; }
+
+    void loadOrders();
+    void saveOrders();
 
 private slots:
     void checkTimeoutOrders();

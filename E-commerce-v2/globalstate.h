@@ -28,6 +28,8 @@ public:
     void setIsMerchant(bool isMerchant);
     void setBalance(double balance);
 
+    static GlobalState * instance();
+
 signals:
     // 属性变更信号
     void usernameChanged();
@@ -43,6 +45,7 @@ private:
     bool m_isConsumer = false;
     bool m_isMerchant = false;
     double m_balance = 0.0;
+    static GlobalState * m_instance;
 };
 
 #endif // GLOBALSTATE_H

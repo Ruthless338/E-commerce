@@ -12,7 +12,7 @@
             "merchantUsername": "admin2",
             "name": "西游记",
             "price": 100,
-            "stock": 96
+            "stock": 68
         },
         {
             "category": "图书",
@@ -21,7 +21,7 @@
             "merchantUsername": "admin2",
             "name": "三国演义",
             "price": 120,
-            "stock": 95
+            "stock": 90
         }
     ]
 }

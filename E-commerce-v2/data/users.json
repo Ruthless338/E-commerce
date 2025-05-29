@@ -1,12 +1,12 @@
 [
     {
-        "balance": 1096,
+        "balance": 216,
         "name": "admin1",
         "password": "bcb15f821479b4d5772bd0ca866c00ad5f926e3580720659cc80d39c9d09802a",
         "type": "Consumer"
     },
     {
-        "balance": 1200,
+        "balance": 4080,
         "name": "admin2",
         "password": "bcb15f821479b4d5772bd0ca866c00ad5f926e3580720659cc80d39c9d09802a",
         "type": "Merchant"

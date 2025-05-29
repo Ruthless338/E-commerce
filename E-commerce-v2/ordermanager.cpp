@@ -2,9 +2,23 @@
 #include "authmanager.h"
 #include "productmodel.h"
 #include "globalstate.h"
+#include "filemanager.h"
 #include <QTimer>
 #include <QDebug>
 
+void OrderManager::loadOrders() {
+    // 清理现有订单
+    qDeleteAll(orders);
+    orders.clear();
+    
+    // 从文件加载订单
+    QList<Product*> allProducts = FileManager::loadProducts();
+    orders = FileManager::loadOrders(allProducts);
+}
+
+void OrderManager::saveOrders() {
+    FileManager::saveOrders(orders);
+}
 
 bool OrderManager::payOrder(Order* order, const QString& consumerUsername) {
     if(order->getStatus() != Order::Pending) {
@@ -39,20 +53,34 @@ bool OrderManager::payOrder(Order* order, const QString& consumerUsername) {
     }
 
     order->confirmStock();
+
+    for(auto it = items.begin(); it != items.end(); it++) {
+        ProductModel::instance() -> productStockNotify(it.key());
+    }
+
+    ProductModel::instance() -> saveProducts();
+    saveOrders(); // 保存订单状态
     return true;
 }
 
 void OrderManager::checkTimeoutOrders() {
     QDateTime now = QDateTime::currentDateTime();
+    bool ordersChanged = false;
+    
     for(auto it = orders.begin(); it != orders.end();) {
         if((*it)->getStatus() == Order::Pending &&
             (*it)->getCreateTimer().secsTo(now) > 5 * 60) {
             (*it)->releaseStock();
             delete *it;
             it = orders.erase(it);
+            ordersChanged = true;
         } else {
             ++it;
         }
+    }
+    
+    if (ordersChanged) {
+        saveOrders(); // 保存订单状态
     }
 }
 

@@ -56,8 +56,9 @@ public:
     Product* findProduct(const QString& name) const;
     Product* findProductByNameAndMerchant(const QString& name, const QString& merchantUsername) const;
 
+    // 用于确认订单时发送单个商品数据更改信号
+    bool productStockNotify(Product* productToUpdate);
     static ProductModel* instance();
-    Q_INVOKABLE void forceViewRefresh();
 public slots:
     void copyImage(const QString& srcPath, const QString& destPath);
     void setCategoryDiscount(const QString& category, double discount);

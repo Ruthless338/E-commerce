@@ -1,6 +1,7 @@
 #include "shoppingcart.h"
 #include "filemanager.h"
 #include "productmodel.h"
+#include "globalstate.h"
 #include <QMetaType>
 Q_DECLARE_METATYPE(QList<QVariant>)
 
@@ -11,6 +12,7 @@ bool ShoppingCart::addItem(Product *product, int quantity) {
     }
     items[product] += quantity;
     emit cartChanged();
+    saveShoppingCart(GlobalState::instance()->username());
     return true;
 }
 
@@ -18,6 +20,7 @@ bool ShoppingCart::updateQuantity(Product* product, int newQuantity) {
     if(!items.contains(product)) return false;
     items[product] = newQuantity;
     emit cartChanged();
+    saveShoppingCart(GlobalState::instance()->username());
     return true;
 }
 
@@ -25,6 +28,7 @@ bool ShoppingCart::removeItem(Product* product) {
     if(!items.contains(product)) return false;
     items.remove(product);
     emit cartChanged();
+    saveShoppingCart(GlobalState::instance()->username());
     return true;
 }
 
@@ -85,6 +89,7 @@ bool ShoppingCart::updateQuantityByName(const QString& productName, int newQuant
             }
             items[it.key()] = newQuantity;
             emit cartChanged();
+            saveShoppingCart(GlobalState::instance()->username());
             return true;
         }
     }
@@ -96,6 +101,7 @@ bool ShoppingCart::removeItemByName(const QString& productName) {
         if (it.key()->getName() == productName) {
             items.remove(it.key());
             emit cartChanged();
+            saveShoppingCart(GlobalState::instance()->username());
             return true;
         }
     }

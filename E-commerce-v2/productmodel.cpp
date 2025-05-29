@@ -282,3 +282,26 @@ Product* ProductModel::findProductByNameAndMerchant(const QString& name, const Q
     return nullptr;
 }
 
+bool ProductModel::productStockNotify(Product* productToUpdate) {
+    if(!productToUpdate) {
+        qDebug() << "更新库存失败！体统的商品指针为空";
+        return false;
+    }
+    int rowIndex = -1;
+    for(int i=0;i<m_allProducts.count();i++) {
+        // qDebug() << i << " " << m_allProducts.at(i)->getName() <<" " <<m_allProducts.at(i)->getMerchantUsername() << " " <<rowIndex;
+        if(m_allProducts.at(i)->getName() == productToUpdate->getName()
+            && m_allProducts.at(i)->getMerchantUsername() == productToUpdate->getMerchantUsername() ){
+            rowIndex = i;
+            break;
+        }
+    }
+    // qDebug() << productToUpdate->getName() <<" " <<productToUpdate->getMerchantUsername() << " " <<rowIndex<<'\n';
+
+    if(rowIndex != -1) {
+        QModelIndex modelIdx = createIndex(rowIndex, 0);
+        emit dataChanged(modelIdx, modelIdx, {StockRole});
+    }
+    return true;
+}
+

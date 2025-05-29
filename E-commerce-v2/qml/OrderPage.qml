@@ -135,14 +135,15 @@ Item {
                     onClicked: {
                         if (orderData && orderData.items) {
                             const orderResult = OrderManager.createOrder(orderData.username, orderData.items);
+                            global.balance = AuthManager.getBalance(global.username);
                             if (orderResult) {
                                 // 清空购物车
                                 ShoppingCart.loadShoppingCart(orderData.username);
-                                operationStatus.text = "订单创建成功！";
+                                operationStatus.text = "订单支付成功！";
                                 operationStatus.color = "green";
                                 operationStatus.success = true;
                             } else {
-                                operationStatus.text = "订单创建失败，请检查余额或库存！";
+                                operationStatus.text = "订单支付失败，请检查余额或库存！";
                                 operationStatus.color = "red";
                                 operationStatus.success = false;
                             }
