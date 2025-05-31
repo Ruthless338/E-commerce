@@ -6,6 +6,13 @@
 #include <QTimer>
 #include <QDebug>
 
+OrderManager::OrderManager(QObject *parent) : QObject(parent) {
+    loadOrders();
+    QTimer *timeoutTimer = new QTimer(this);
+    connect(timeoutTimer, &QTimer::timeout, this, &OrderManager::checkTimeoutOrders);
+    timeoutTimer->start(5*60*1000);
+}
+
 void OrderManager::loadOrders() {
     // 清理现有订单
     qDeleteAll(orders);
@@ -20,9 +27,67 @@ void OrderManager::saveOrders() {
     FileManager::saveOrders(orders);
 }
 
+Order* OrderManager::prepareOrder(const QString& username, const QVariantList& itemsData) {
+    QMap<Product*, int> orderItemsMap;
+
+    for (const QVariant& itemVar : itemsData) {
+        QVariantMap itemMap = itemVar.toMap();
+        QString productName = itemMap["name"].toString();
+        QString merchantUsername = itemMap["merchantUsername"].toString(); // Expecting this from ShoppingCart::getCartItems
+        int quantity = itemMap["quantity"].toInt();
+
+        if (quantity <= 0) {
+            qDebug() << "OrderManager::prepareOrder: Invalid quantity" << quantity << "for" << productName;
+            return nullptr;
+        }
+
+        Product* product = ProductModel::instance()->findProductByNameAndMerchant(productName, merchantUsername);
+
+        if (!product) {
+            qDebug() << "OrderManager::prepareOrder: Product not found:" << productName << "by" << merchantUsername;
+            return nullptr;
+        }
+        if (product->getStock() < quantity) {
+            qDebug() << "OrderManager::prepareOrder: Stock insufficient for" << productName << ". Required:" << quantity << "Available:" << product->getStock();
+            return nullptr;
+        }
+        orderItemsMap[product] = quantity;
+    }
+
+    if (orderItemsMap.isEmpty()) {
+        qDebug() << "OrderManager::prepareOrder: No valid items to order.";
+        return nullptr;
+    }
+
+    Order* order = new Order(username, orderItemsMap); // QObject parent is nullptr by default
+    // order object will be parented by QML engine if returned to QML and assigned to a property,
+    // or managed by OrderManager's list. Consider explicit parenting if necessary.
+
+    if (!order->freezeStock()) {
+        qDebug() << "OrderManager::prepareOrder: Failed to freeze stock for order.";
+        // Order::freezeStock should handle internal rollback of partial freezes.
+        delete order; // Clean up order object if freeze fails
+        return nullptr;
+    }
+
+    this->orders.append(order);
+    saveOrders(); // Save the new pending order
+
+    qDebug() << "Order prepared for" << username << "with" << orderItemsMap.count() << "item types. Order status:" << order->getStatusString();
+    return order;
+}
+
 bool OrderManager::payOrder(Order* order, const QString& consumerUsername) {
     if(order->getStatus() != Order::Pending) {
         qDebug() << "订单状态不是待支付状态";
+        return false;
+    }
+
+    if (order->getRemainingSeconds() <= 0) {
+        qDebug() << "订单超时, 解冻库存";
+        order->releaseStock();
+        ProductModel::instance()->saveProducts();
+        saveOrders();
         return false;
     }
 
@@ -35,6 +100,7 @@ bool OrderManager::payOrder(Order* order, const QString& consumerUsername) {
 
     QMap<Product*, int> items = order->getItems();
     bool allSuccess = true;
+    QMap<QString, double> merchantPayouts;
     for(auto it = items.begin(); it != items.end(); it++) {
         QString merchant = it.key()->getMerchantUsername();
         double itemTotal = it.key()->getPrice() * it.value();
@@ -43,45 +109,60 @@ bool OrderManager::payOrder(Order* order, const QString& consumerUsername) {
             allSuccess = false;
             break;
         }
+        merchantPayouts[merchant] += itemTotal;
     }
 
     if (!allSuccess) {
         // 如果有任何一个商家加款失败，回滚所有操作
         AuthManager::addBalance(consumerUsername, total);
+        for(auto const& [merchant, amount] : merchantPayouts.toStdMap()) {
+            AuthManager::deductBalance(merchant, amount);
+        }
         order->releaseStock();
         return false;
     }
 
+    // 解冻库存，并真正意义上扣除库存
     order->confirmStock();
 
+    // 向前端发送数据（主要是库存）更改的信号
     for(auto it = items.begin(); it != items.end(); it++) {
         ProductModel::instance() -> productStockNotify(it.key());
     }
 
     ProductModel::instance() -> saveProducts();
     saveOrders(); // 保存订单状态
+    if(!FileManager::clearUserShoppingCart(consumerUsername)) {
+        qDebug() << "清空购物车失败，用户名为：" << consumerUsername << '\n';
+    }
     return true;
 }
 
 void OrderManager::checkTimeoutOrders() {
     QDateTime now = QDateTime::currentDateTime();
     bool ordersChanged = false;
-    
-    for(auto it = orders.begin(); it != orders.end();) {
-        if((*it)->getStatus() == Order::Pending &&
-            (*it)->getCreateTimer().secsTo(now) > 5 * 60) {
-            (*it)->releaseStock();
-            delete *it;
-            it = orders.erase(it);
+    QList<Order*> ordersToRemove;
+
+    for(int i = 0; i < orders.size(); ++i) {
+        Order* order = orders.at(i);
+        if(order->getStatus() == Order::Pending && order->getRemainingSeconds() <= 0) {
+            qDebug() << "Order for" << order->getConsumerUsername() << "订单超时，解冻库存";
+            order->releaseStock();
+
+            QMap<Product*, int> items = order->getItems();
+            for(auto it = items.begin(); it != items.end(); it++) {
+                ProductModel::instance()->productStockNotify(it.key());
+            }
+            ProductModel::instance()->saveProducts();
+
             ordersChanged = true;
-        } else {
-            ++it;
         }
     }
-    
+
     if (ordersChanged) {
-        saveOrders(); // 保存订单状态
+        saveOrders();
     }
+
 }
 
 QVariant OrderManager::createOrder(const QString& username, const QVariantList& items) {

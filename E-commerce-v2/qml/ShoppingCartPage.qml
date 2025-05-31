@@ -21,9 +21,9 @@ Item {
     }
 
     Connections {
-        target: parent
+        target: cartPage
         function onVisibleChanged() {
-            if (parent.visible && global.username) {
+            if (cartPage.visible && global.username) {
                 ShoppingCart.loadShoppingCart(global.username);
                 cartListView.updateCartItems();
             }
@@ -114,14 +114,25 @@ Item {
                 Item { Layout.fillWidth: true }
                 Button {
                     text: "生成订单"
-                    enabled: cartListView.count > 0
+                    enabled: cartListView.count > 0 && global.username
                     onClicked: {
-                        const orderData = {
-                            username: global.username,
-                            items: ShoppingCart.getCartItems(),
-                            totalPrice: ShoppingCart.getTotalPrice()
-                        };
-                        checkout(orderData);
+                        // const orderData = {
+                        //     username: global.username,
+                        //     items: ShoppingCart.getCartItems(),
+                        //     totalPrice: ShoppingCart.getTotalPrice()
+                        // };
+                        // checkout(orderData);
+                        const itemsToOrder = ShoppingCart.getCartItems();
+                        if (itemsToOrder.length === 0) {
+                            console.log("Shopping cart is empty.");
+                            return;
+                        }
+                        var newOrderObject = OrderManager.prepareOrder(global.username, itemsToOrder);
+                        if (newOrderObject) {
+                            checkout(newOrderObject);
+                        } else {
+                            console.log("Failed to prepare order. Check console for details (stock/product issues).");
+                        }
                     }
                 }
             }

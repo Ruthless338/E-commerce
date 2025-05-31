@@ -2,11 +2,13 @@
 
 Order::Order(const QString& consumerUsername,
              const QList<QPair<QString, QString>>& productIdentifiers,
-             const QList<Product*>& allProducts)
+             const QList<Product*>& allProducts,
+             QObject* parent)
     : consumerUsername(consumerUsername),
     productIdentifiers(productIdentifiers),
     createTime(QDateTime::currentDateTime()),
-    status(Pending) {
+    status(Pending),
+    QObject(parent) {
 
     // 根据商品标识符查找对应的 Product 对象
     for (const auto& identifier : productIdentifiers) {
@@ -24,13 +26,20 @@ Order::Order(const QString& consumerUsername,
 
 
 bool Order::freezeStock() {
+    QList<Product*> successfullyFrozen;
     for(auto it = items.begin(); it != items.end(); it++) {
         Product* product = it.key();
-        // 冻结库存
-        if(product->getStock() < it.value()) {
+        int quantity = it.value();
+        // 冻结库存数量不足，回滚操作
+        if(product->getStock() < quantity) {
+            for(Product* p : successfullyFrozen) {
+                p->releaseStock(items.value(p));
+            }
             return false;
         }
-        product->freezeStock(it.value());
+        // 冻结库存
+        product->freezeStock(quantity);
+        successfullyFrozen.append(product);
     }
     status = Pending;
     return true;
@@ -62,6 +71,7 @@ double Order::calculateTotal() const {
 }
 
 int Order::getRemainingSeconds() const {
+    if(status != Pending) return 0;
     QDateTime now = QDateTime::currentDateTime();
     int elapsed = createTime.secsTo(now);
     return qMax(300 - elapsed, 0); // 5分钟倒计时
@@ -75,3 +85,28 @@ QList<QPair<Product*, int>> Order::getItemPairs() const {
     return pairs;
 }
 
+QList<QVariant> Order::getQmlItems() const {
+    QList<QVariant> itemList;
+    for (auto it = items.begin(); it != items.end(); ++it) {
+        Product* product = it.key();
+        int quantity = it.value();
+        QVariantMap map;
+        map["name"] = product->getName();
+        map["description"] = product->getDescription();
+        map["price"] = product->getPrice();
+        map["quantity"] = quantity;
+        map["imagePath"] = product->getImagePath();
+        map["merchantUsername"] = product->getMerchantUsername();
+        itemList.append(map);
+    }
+    return itemList;
+}
+
+QString Order::getStatusString() const {
+    switch(status) {
+    case Order::Pending: return "Pending";
+    case Order::Paid: return "Paid";
+    case Order::Cancelled: return "Cancelled";
+    default: return "Unknown";
+    }
+}

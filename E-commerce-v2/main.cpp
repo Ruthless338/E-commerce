@@ -43,6 +43,8 @@ int main(int argc, char *argv[]) {
             return new OrderManager;
         }
         );
+    qmlRegisterUncreatableType<Order>("ECommerce.Core", 1, 0, "OrderEntity",
+                                      "OrderEntity is managed by OrderManager and cannot be created directly in QML.");
     // 注册商品数据模型,将ProductModel实例暴露为全局属性
     ProductModel productModel;
     engine.rootContext()->setContextProperty("productModel", &productModel);

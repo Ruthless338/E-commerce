@@ -60,9 +60,14 @@ ApplicationWindow {
             shoppingCartPage.visible = false;
             mainContentPage.visible = true;
         }
-        onCheckout: (orderData) => {
+        // onCheckout: (orderData) => {
+        //     shoppingCartPage.visible = false;
+        //     orderPage.orderData = orderData;
+        //     orderPage.visible = true;
+        // }
+        onCheckout: (preparedOrderObject) => {
             shoppingCartPage.visible = false;
-            orderPage.orderData = orderData;
+            orderPage.orderObject = preparedOrderObject;
             orderPage.visible = true;
         }
     }
@@ -74,20 +79,28 @@ ApplicationWindow {
             orderPage.visible = false;
             shoppingCartPage.visible = true;
         }
-        onOrderConfirmed: {
-            if (orderData && orderData.items) {
-                const orderResult = OrderManager.createOrder(orderData.username, orderData.items);
-                if (orderResult) {
-                    // 清空购物车
-                    ShoppingCart.loadShoppingCart(orderData.username);
-                    // 返回主页面
-                    orderPage.visible = false;
-                    mainContentPage.visible = true;
-                } else {
-                    console.log("订单创建失败！");
-                }
-            }
+        onOrderPaymentSuccess: {
+            orderPage.visible = false;
+            mainContentPage.visible = true;
         }
+        onOrderPaymentFailed: {
+            console.log("支付失败");
+        }
+
+        // onOrderConfirmed: {
+        //     if (orderData && orderData.items) {
+        //         const orderResult = OrderManager.createOrder(orderData.username, orderData.items);
+        //         if (orderResult) {
+        //             // 清空购物车
+        //             ShoppingCart.loadShoppingCart(orderData.username);
+        //             // 返回主页面
+        //             orderPage.visible = false;
+        //             mainContentPage.visible = true;
+        //         } else {
+        //             console.log("订单创建失败！");
+        //         }
+        //     }
+        // }
     }
 
     header: ToolBar {
@@ -241,6 +254,14 @@ ApplicationWindow {
                 text: "设置折扣"
                 visible: global.isMerchant
                 onClicked: categoryDiscountDialog.visible = true
+            }
+            Button {
+                text: "购物车"
+                visible: global.isConsumer
+                onClicked: {
+                    shoppingCartPage.visible = true
+                    mainContentPage.visible = false
+                }
             }
         }
     }

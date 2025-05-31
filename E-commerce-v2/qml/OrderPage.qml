@@ -9,10 +9,57 @@ Item {
     visible: false
     anchors.fill: parent
 
-    property var orderData: null
+    property var orderObject: null
 
     signal goBack()
-    signal orderConfirmed()
+    // signal orderConfirmed()
+    signal orderPaymentSuccess()
+    signal orderPaymentFailed()
+
+    Connections {
+        target: orderPage
+        function onOrderObjectChanged() {
+            if (orderObject) {
+                orderListView.model = orderObject.getQmlItems();
+                totalAmountLabel.text = "总计：￥" + orderObject.calculateTotal().toFixed(2);
+                countdownLabel.text = "剩余支付时间: " + formatRemainingTime(orderObject.getRemainingSeconds());
+                paymentCountdownTimer.start();
+            } else {
+                orderListView.model = [];
+                totalAmountLabel.text = "总计：￥0.00";
+                countdownLabel.text = "";
+                paymentCountdownTimer.stop();
+            }
+        }
+    }
+
+    Timer {
+        id: paymentCountdownTimer
+        interval: 1000
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: {
+            if (orderObject && orderObject.getStatusString() === "Pending") {
+                let seconds = orderObject.getRemainingSeconds();
+                countdownLabel.text = "剩余支付时间: " + formatRemainingTime(seconds);
+                if (seconds <= 0) {
+                    countdownLabel.text = "订单已超时";
+                    confirmOrderButton.enabled = false;
+                    // OrderManager.checkTimeoutOrders will handle backend cancellation
+                }
+            } else {
+                countdownLabel.text = orderObject ? "订单状态: " + orderObject.getStatusString() : "无订单";
+                this.stop();
+            }
+        }
+    }
+
+    function formatRemainingTime(totalSeconds) {
+        if (totalSeconds <=0) return "00:00";
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+    }
 
     Label {
         id: operationStatus
@@ -25,12 +72,15 @@ Item {
         
         Timer {
             id: statusTimer
-            interval: 2000
+            interval: 3000
             onTriggered: {
                 operationStatus.visible = false;
                 if (operationStatus.success) {
                     orderPage.visible = false;
-                    mainContentPage.visible = true;
+                    // mainContentPage.visible = true;
+                    orderPaymentSuccess();
+                } else {
+                    orderPaymentFailed();
                 }
             }
         }
@@ -55,11 +105,19 @@ Item {
             }
         }
 
+        Label {
+            id: countdownLabel
+            Layout.fillWidth: true
+            horizontalAlignment: Text.AlignHCenter
+            font.pixelSize: 14
+            color: "blue"
+        }
+
         ListView {
             id: orderListView
             Layout.fillWidth: true
             Layout.fillHeight: true
-            model: orderData ? orderData.items : []
+            model: orderObject ? orderObject.getQmlItems() : []
             delegate: Rectangle {
                 width: ListView.view.width
                 height: 100
@@ -121,7 +179,8 @@ Item {
                 spacing: 20
 
                 Label {
-                    text: "总计：￥" + (orderData ? orderData.totalPrice.toFixed(2) : "0.00")
+                    id: totalAmountLabel
+                    text: "总计：￥" + (orderObject ? orderObject.calculateTotal().toFixed(2) : "0.00")
                     font.bold: true
                     font.pixelSize: 16
                     Layout.alignment: Qt.AlignVCenter
@@ -130,25 +189,50 @@ Item {
                 Item { Layout.fillWidth: true }
 
                 Button {
+                    id: confirmOrderButton
                     text: "确认下单"
-                    enabled: orderData !== null
+                    enabled: orderObject && orderObject.getStatusString() === "Pending" && orderObject.getRemainingSeconds() > 0
                     onClicked: {
-                        if (orderData && orderData.items) {
-                            const orderResult = OrderManager.createOrder(orderData.username, orderData.items);
-                            global.balance = AuthManager.getBalance(global.username);
-                            if (orderResult) {
-                                // 清空购物车
-                                ShoppingCart.loadShoppingCart(orderData.username);
+                        // if (orderData && global.username) {
+                        //     const orderResult = OrderManager.createOrder(orderData.username, orderData.items);
+                        //     global.balance = AuthManager.getBalance(global.username);
+                        //     if (orderResult) {
+                        //         // 清空购物车
+                        //         ShoppingCart.loadShoppingCart(orderData.username);
+                        //         operationStatus.text = "订单支付成功！";
+                        //         operationStatus.color = "green";
+                        //         operationStatus.success = true;
+                        //     } else {
+                        //         operationStatus.text = "订单支付失败，请检查余额或库存！";
+                        //         operationStatus.color = "red";
+                        //         operationStatus.success = false;
+                        //     }
+                        //     operationStatus.visible = true;
+                        //     statusTimer.start();
+                        //  }
+                        if (orderObject && global.username) {
+                            paymentCountdownTimer.stop(); // Stop countdown during payment attempt
+                            const success = OrderManager.payOrder(orderObject, global.username);
+                            global.balance = AuthManager.getBalance(global.username); // Update balance display
+
+                            if (success) {
+                                ShoppingCart.loadShoppingCart(global.username); // Clear/update cart
                                 operationStatus.text = "订单支付成功！";
                                 operationStatus.color = "green";
                                 operationStatus.success = true;
                             } else {
-                                operationStatus.text = "订单支付失败，请检查余额或库存！";
+                                operationStatus.text = "订单支付失败！"; // More specific error can come from backend if desired
                                 operationStatus.color = "red";
                                 operationStatus.success = false;
+                                if (orderObject.getRemainingSeconds() > 0 && orderObject.getStatusString() === "Pending") {
+                                     paymentCountdownTimer.start(); // Restart countdown if order still valid
+                                } else {
+                                     confirmOrderButton.enabled = false; // Disable if timed out or status changed
+                                     countdownLabel.text = "订单状态: " + orderObject.getStatusString();
+                                }
                             }
                             operationStatus.visible = true;
-                            statusTimer.start();
+                            statusTimer.start(); // Show status message temporarily
                         }
                     }
                 }

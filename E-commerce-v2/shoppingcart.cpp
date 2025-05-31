@@ -51,6 +51,7 @@ void ShoppingCart::loadShoppingCart(const QString& username) {
         Product* product = ProductModel::instance()->findProduct(productName);
         if (product) items[product] = it.value().toInt();
     }
+    emit cartChanged();
 }
 
 void ShoppingCart::saveShoppingCart(const QString& username) {
@@ -71,6 +72,7 @@ QList<QVariant> ShoppingCart::getCartItems() const {
     for (auto it = items.begin(); it != items.end(); ++it) {
         QVariantMap item;
         item["name"] = it.key()->getName();
+        item["merchantUsername"] = it.key()->getMerchantUsername();
         item["price"] = it.key()->getPrice();
         item["imagePath"] = it.key()->getImagePath();
         item["description"] = it.key()->getDescription();

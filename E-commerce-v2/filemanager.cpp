@@ -203,6 +203,26 @@ QVariantMap FileManager::loadAllShoppingCarts() {
     return allCarts;
 }
 
+QString orderStatusToString(Order::Status status) {
+    switch(status) {
+    case Order::Pending:
+        return "Pending";
+    case Order::Paid:
+        return "Paid";
+    case Order::Cancelled:
+        return "Cancelled";
+    default:
+        return "Unknown";
+    }
+}
+
+Order::Status stringToOrderStatus(const QString& statusStr) {
+    if(statusStr == "Pending") return Order::Pending;
+    if(statusStr == "Paid") return Order::Paid;
+    if(statusStr == "Cancelled") return Order::Cancelled;
+    return Order::Pending;
+}
+
 // 保存订单数据
 bool FileManager::saveOrders(const QList<Order*>& orders) {
     QFile file("D:/Qt_projects/E-commerce/E-commerce-v2/data/order.json");
@@ -211,12 +231,19 @@ bool FileManager::saveOrders(const QList<Order*>& orders) {
     QJsonArray orderArray;
     for (Order* order : orders) {
         QJsonObject orderObj;
-        orderObj["consumer"] = order->getConsumerUsername();
+        orderObj["consumerUsername"] = order->getConsumerUsername();
+        orderObj["creationTime"]  = order->getCreateTimer().toString(Qt::ISODate);
+        orderObj["status"] = orderStatusToString(order->getStatus());
+
         QJsonArray itemsArray;
-        for (auto& item : order->getProductIdentifiers()) {
+        const QMap<Product*, int>& orderItemsMap = order->getItems();
+        for (auto it = orderItemsMap.begin(); it != orderItemsMap.end(); ++it) {
+            Product* product = it.key();
+            int quantity = it.value();
             QJsonObject itemObj;
-            itemObj["product"] = item.first;
-            itemObj["merchant"] = item.second;
+            itemObj["productName"] = product->getName();
+            itemObj["merchantUsername"] = product->getMerchantUsername();
+            itemObj["quantity"] = quantity;
             itemsArray.append(itemObj);
         }
         orderObj["items"] = itemsArray;
@@ -225,6 +252,7 @@ bool FileManager::saveOrders(const QList<Order*>& orders) {
 
     QJsonDocument doc(orderArray);
     file.write(doc.toJson());
+    file.close();
     return true;
 }
 
@@ -238,20 +266,70 @@ QList<Order*> FileManager::loadOrders(const QList<Product*>& allProducts) {
         for (const QJsonValue& orderVal : orderArray) {
             QJsonObject orderObj = orderVal.toObject();
             QString consumer = orderObj["consumer"].toString();
+            QDateTime creationTime = QDateTime::fromString(orderObj["creationTime"].toString(), Qt::ISODate);
+            Order::Status status = stringToOrderStatus(orderObj["status"].toString());
             QJsonArray itemsArray = orderObj["items"].toArray();
 
-            QList<QPair<QString, QString>> identifiers;
+            // QList<QPair<QString, QString>> identifiers;
+            // for (const QJsonValue& itemVal : itemsArray) {
+            //     QJsonObject itemObj = itemVal.toObject();
+            //     identifiers.append(qMakePair(
+            //         itemObj["product"].toString(),
+            //         itemObj["merchant"].toString()
+            //         ));
+            // }
+
+            // Order* order = new Order(consumer, identifiers, allProducts);
+            // orders.append(order);
+
+            QMap<Product*, int> loadedOrderItems;
             for (const QJsonValue& itemVal : itemsArray) {
                 QJsonObject itemObj = itemVal.toObject();
-                identifiers.append(qMakePair(
-                    itemObj["product"].toString(),
-                    itemObj["merchant"].toString()
-                    ));
+                QString productName = itemObj["productName"].toString();
+                QString merchantUsername = itemObj["merchantUsername"].toString();
+                int quantity = itemObj["quantity"].toInt(1);
+
+                Product* foundProduct = nullptr;
+                for (Product* p : allProducts) {
+                    if (p->getName() == productName && p->getMerchantUsername() == merchantUsername) {
+                        foundProduct = p;
+                        break;
+                    }
+                }
+                if (foundProduct) {
+                    loadedOrderItems.insert(foundProduct, quantity);
+                } else {
+                    qWarning() << "Product not found during order load:" << productName << "by" << merchantUsername;
+                }
             }
 
-            Order* order = new Order(consumer, identifiers, allProducts);
+            if (loadedOrderItems.isEmpty() && !itemsArray.isEmpty()) {
+                qWarning() << "Order for consumer" << consumer << "has item references that could not be resolved. Skipping this order potentially.";
+                // Decide if an order with no resolvable items should be loaded or skipped.
+                // For now, it will be an order with an empty item list if all products are missing.
+            }
+
+            Order* order = new Order(consumer, loadedOrderItems);
+            order->setCreateTimeForLoadedOrder(creationTime);
+            order->setStatus(status);
             orders.append(order);
         }
     }
     return orders;
+}
+
+bool FileManager::clearUserShoppingCart(const QString& username) {
+    if(username.isEmpty()) {
+        qDebug() << "清空购物车时，用户名为空";
+        return false;
+    }
+
+    QVariantMap allCarts = FileManager::loadAllShoppingCarts();
+    if(allCarts.contains(username)) {
+        allCarts.remove(username);
+    }
+
+    bool success = FileManager::saveShoppingCarts(allCarts);
+
+    return success;
 }

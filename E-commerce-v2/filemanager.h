@@ -30,6 +30,7 @@ public:
 
     static bool saveOrders(const QList<Order*>& orders);
     static QList<Order*> loadOrders(const QList<Product*>& allProducts);
+    static bool clearUserShoppingCart(const QString& username);
 };
 
 #endif // FILEMANAGER_H

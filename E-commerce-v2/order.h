@@ -2,21 +2,33 @@
 #ifndef ORDER_H
 #define ORDER_H
 #include <QDateTime>
+#include <QObject>
+#include <QVariant>
 #include "product.h"
 
-class Order {
+class Order :public QObject {
+    Q_OBJECT
 public:
     enum Status { Pending, Paid, Cancelled };
+    Q_ENUM(Status)
 
-    Order(const QMap<Product*, int>& items)
-        : items(items), createTime(QDateTime::currentDateTime()) {}
+    Order(const QMap<Product*, int>& items, QObject* parent = nullptr)
+        : items(items), createTime(QDateTime::currentDateTime()), QObject(parent) {}
+
+    Order(const QString& consumerUsername, const QMap<Product*, int>& items, QObject* parent = nullptr)
+        : items(items),
+        consumerUsername(consumerUsername),
+        status(Pending),
+        createTime(QDateTime::currentDateTime()),
+        QObject(parent) {}
 
     Order(const QString& consumerUsername,
           const QList<QPair<QString, QString>>& productIdentifiers,
-          const QList<Product*>& allProducts);
+          const QList<Product*>& allProducts,
+          QObject* parent = nullptr);
 
     // 计算订单总金额
-    double calculateTotal() const;
+    Q_INVOKABLE double calculateTotal() const;
 
 
     Status getStatus() const { return status; }
@@ -27,7 +39,11 @@ public:
     QString getConsumerUsername() const { return consumerUsername; }
     QList<QPair<QString, QString>> getProductIdentifiers() const { return productIdentifiers; }
 
-    Q_INVOKABLE QList<QPair<Product*, int>> getItemPairs() const ;
+    Q_INVOKABLE QList<QPair<Product*, int>> getItemPairs() const;
+    Q_INVOKABLE QString getStatusString() const;
+    Q_INVOKABLE QList<QVariant> getQmlItems() const;
+
+    void setCreateTimeForLoadedOrder(const QDateTime& time) { createTime = time; }
 
     void confirmStock();
     void releaseStock();
