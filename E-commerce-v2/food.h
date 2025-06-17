@@ -4,8 +4,8 @@
 
 class Food : public Product {
 public:
-    Food(const QString& n, const QString& desc, double price, int stk, const QString& merchantUsername, const QString& imagePath)
-        : Product(n, desc, price, stk, merchantUsername, imagePath) {
+    Food(const QString& n, const QString& desc, double price, int stk, const QString& merchantUsername, const QString& imagePath, int frozenStock = 0)
+        : Product(n, desc, price, stk, merchantUsername, imagePath, frozenStock) {
         category = "食品";
     }
     // 由于要对某一品类下所有商品都打折，故discount应为静态变量

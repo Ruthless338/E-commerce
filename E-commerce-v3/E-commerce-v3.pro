@@ -1,5 +1,7 @@
-QT += quick
-
+QT += quick \
+      quickcontrols2 \
+      core \
+      network
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
@@ -15,6 +17,7 @@ HEADERS += \
         globalstate.h \
         main.h \
         merchant.h \
+        networkclient.h \
         order.h \
         ordermanager.h \
         product.h \
@@ -33,6 +36,7 @@ SOURCES += \
         globalstate.cpp \
         main.cpp \
         merchant.cpp \
+        networkclient.cpp \
         order.cpp \
         ordermanager.cpp \
         product.cpp \

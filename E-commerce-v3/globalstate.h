@@ -29,6 +29,7 @@ public:
     void setBalance(double balance);
 
     static GlobalState * instance();
+    Q_INVOKABLE void logout();
 
 signals:
     // 属性变更信号

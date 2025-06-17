@@ -1,18 +1,14 @@
 #include "serverauthmanager.h"
-#include "filemanager.h" // ServerAuthManager 直接与 FileManager 交互
-#include "user.h"        // User, Consumer, Merchant 类
+#include "filemanager.h"
+#include "user.h"
 #include "consumer.h"
 #include "merchant.h"
 #include <QDebug>
 
 ServerAuthManager::ServerAuthManager(QObject *parent) : QObject(parent) {
-    // 可以在这里预加载所有用户，如果访问频繁且用户量不大
-    // 或者在每个需要用户信息的方法中按需加载
-    // qInfo() << "ServerAuthManager initialized.";
-    // Test load users on init:
-    // QMap<QString, User*> users = FileManager::loadAllUsers();
-    // qInfo() << "ServerAuthManager: Initial user load test, found" << users.count() << "users.";
-    // qDeleteAll(users); // Clean up if only for test
+    QMap<QString, User*> users = FileManager::loadAllUsers();
+    qInfo() << "ServerAuthManager: Loaded " << users.count() << "users.";
+    qDeleteAll(users); // Clean up if only for test
 }
 
 QVariantMap ServerAuthManager::verifyLogin(const QString &username, const QString &password) {
@@ -86,11 +82,6 @@ QVariantMap ServerAuthManager::registerUser(const QString &username, const QStri
         if (FileManager::saveUser(newUser)) { // FileManager::saveUser 会处理替换和写入
             result["success"] = true;
             qInfo() << "ServerAuthManager: User" << username << "registered successfully as" << type;
-            // newUser 的内存在 saveUser 内部（如果它创建副本并管理）或外部（如果它不管理）需要处理。
-            // FileManager::saveUser 的实现很重要。当前 FileManager::saveUser 会重新加载所有用户，
-            // 然后添加/替换 newUser 的数据，再保存所有用户。它还会 delete旧的同名用户。
-            // 它在末尾为 newUser 创建了一个新的堆对象并插入existingUsers，这个对象在users map中。
-            // 所以，这里的newUser可以delete，因为saveUser内部创建了副本。
             delete newUser;
         } else {
             result["success"] = false;

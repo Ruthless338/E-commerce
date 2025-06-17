@@ -15,6 +15,7 @@ bool AuthManager::changePassword(const QString &username,
         qDebug() << "修改密码失败：密码错误";
         return false;
     }
+    qDebug() << "Client: change password successfully." << '\n';
 
     user->changePassword(User::hashPassword(newPwd));
     FileManager::saveUser(user);

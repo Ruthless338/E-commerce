@@ -9,8 +9,8 @@
 #include "serverproductmanager.h"
 #include "servershoppingcartmanager.h"
 #include "serverordermanager.h"
-#include "product.h" // For serializing product data
-#include "order.h"   // For serializing order data
+#include "product.h"
+#include "order.h"
 
 ClientHandler::ClientHandler(qintptr socketDescriptor,
                              ServerAuthManager* authMgr, ServerProductManager* prodMgr,
@@ -19,6 +19,7 @@ ClientHandler::ClientHandler(qintptr socketDescriptor,
     : QObject(parent), m_socketDescriptor(socketDescriptor),
     m_authManager_s(authMgr), m_productManager_s(prodMgr),
     m_shoppingCartManager_s(cartMgr), m_orderManager_s(orderMgr) {
+
 }
 
 ClientHandler::~ClientHandler() {
@@ -30,6 +31,7 @@ ClientHandler::~ClientHandler() {
 }
 
 void ClientHandler::process() {
+    qInfo() << "ClientHandler: process() called for descriptor" << m_socketDescriptor << "on thread" << QThread::currentThreadId();
     m_socket = new QTcpSocket(this); // Parent to ClientHandler for auto-cleanup
     if (!m_socket->setSocketDescriptor(m_socketDescriptor)) {
         qCritical() << "ClientHandler: Failed to set socket descriptor" << m_socketDescriptor << ":" << m_socket->errorString();
@@ -47,47 +49,30 @@ void ClientHandler::process() {
 void ClientHandler::onReadyRead() {
     m_buffer.append(m_socket->readAll());
 
-    // Basic message framing: try to parse JSON. A robust solution uses length prefixes or delimiters.
-    // This simplified version assumes one JSON object per write or clearly separated.
-    // For multiple JSONs in one read: loop and try to parse.
-    QJsonParseError error;
-    QJsonDocument doc = QJsonDocument::fromJson(m_buffer, &error);
+    while(true) {
+        int newlinePos = m_buffer.indexOf('\n');
+        if (newlinePos == -1) {
+            break; // No complete message yet
+        }
+        QByteArray jsonData = m_buffer.left(newlinePos);
+        m_buffer = m_buffer.mid(newlinePos + 1);
 
-    while (error.error == QJsonParseError::NoError && doc.isObject()) {
-        qDebug() << "ClientHandler (" << m_socketDescriptor << ") RX:" << doc.toJson(QJsonDocument::Compact);
-        processMessage(doc.object());
+        if (jsonData.isEmpty()) continue;
 
-        // Remove processed message from buffer
-        // This is tricky without knowing message boundaries.
-        // If we assume one message per transmission and server handles it:
-        m_buffer.clear(); // Simplistic: clear after one message.
-            // A better way: find end of JSON, slice buffer.
+        QJsonParseError error;
+        QJsonDocument doc = QJsonDocument::fromJson(jsonData, &error);
 
-        // Try to parse next message if buffer still has data (not robustly handled here)
-        if (m_buffer.isEmpty()) break;
-        doc = QJsonDocument::fromJson(m_buffer, &error);
-    }
-
-    if (error.error != QJsonParseError::NoError && !m_buffer.isEmpty()) {
-        // If not a complete JSON object yet, error.error might be UnterminatedObject
-        // We keep the partial data in buffer.
-        if (error.offset >= m_buffer.size() -1 && // 错误发生在缓冲区末尾附近
-            (error.error == QJsonParseError::UnterminatedObject || // 常见的未结束错误
-             error.error == QJsonParseError::UnterminatedArray ||
-             error.error == QJsonParseError::MissingNameSeparator || // 这些也是可能由不完整数据造成
-             error.error == QJsonParseError::IllegalValue // 有时末尾的非法值也因不完整
-             // 你可以根据你的Qt版本文档查找 QJsonParseError::ParseError 的可用值
-             )) {
-            qDebug() << "ClientHandler (" << m_socketDescriptor << ") Incomplete JSON in buffer, waiting for more data. Error:" << error.errorString() << "at offset" << error.offset;
+        if (error.error == QJsonParseError::NoError && doc.isObject()) {
+            qDebug() << "ClientHandler (" << m_socketDescriptor << ") RX:" << doc.toJson(QJsonDocument::Compact);
+            processMessage(doc.object());
         } else {
-            // 确定的解析错误，不是因为数据不完整
-            qWarning() << "ClientHandler (" << m_socketDescriptor << ") JSON parse error:" << error.errorString() << ". Buffer:" << m_buffer.constData();
+            qWarning() << "ClientHandler (" << m_socketDescriptor << ") JSON parse error:" << error.errorString() << ". Data:" << jsonData;
             QJsonObject errResponse;
             errResponse["status"] = "error";
             errResponse["message"] = "Invalid JSON request: " + error.errorString();
             errResponse["response_to_action"] = "unknown_malformed";
-            sendResponse(errResponse);
-            m_buffer.clear(); // Discard malformed message
+            errResponse["requestId"] = "invalid_request";
+            sendResponse(errResponse); // Send error back
         }
     }
 }
@@ -107,10 +92,10 @@ void ClientHandler::onSocketError(QAbstractSocket::SocketError socketError) {
 
 void ClientHandler::sendResponse(const QJsonObject& response) {
     if (m_socket && m_socket->isOpen() && m_socket->isWritable()) {
-        QByteArray data = QJsonDocument(response).toJson(QJsonDocument::Compact);
+        QByteArray data = QJsonDocument(response).toJson(QJsonDocument::Compact) + "\n";
         m_socket->write(data);
         m_socket->flush();
-        qDebug() << "ClientHandler (" << m_socketDescriptor << ") TX:" << data;
+        qDebug() << "ClientHandler (" << m_socketDescriptor << ") TX:" << data.trimmed();
     } else {
         qWarning() << "ClientHandler (" << m_socketDescriptor << ") Cannot send response, socket not writable.";
     }
@@ -118,11 +103,13 @@ void ClientHandler::sendResponse(const QJsonObject& response) {
 
 void ClientHandler::processMessage(const QJsonObject& request) {
     QString action = request["action"].toString();
+    QString requestId = request["requestId"].toString();
     QJsonObject payload = request["payload"].toObject();
     QJsonObject responsePayload; // Data part of the response
 
     QString status = "success"; // Default status
     QString message = "";       // Error message if any
+    qDebug() << "Server ClientHandler: " << action << '\n';
 
     // --- Authentication ---
     if (action == "login") responsePayload = handleLogin(payload);
@@ -158,6 +145,7 @@ void ClientHandler::processMessage(const QJsonObject& request) {
 
 
     QJsonObject finalResponse;
+    finalResponse["requestId"] = requestId;
     finalResponse["response_to_action"] = action; // Echo action for client to route
     finalResponse["status"] = status;
     if (status == "success") {

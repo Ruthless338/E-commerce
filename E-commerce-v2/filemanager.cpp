@@ -48,6 +48,7 @@ QMap<QString, User*> FileManager::loadAllUsers()
         }
         users[name] = user;
     }
+    qDebug() << "Client: load users successfully." << '\n';
     return users;
 }
 
@@ -81,13 +82,15 @@ QList<Product*> FileManager::loadProducts(){
         int frozenStock = obj["frozenStock"].toInt();
 
         Product* product = nullptr;
-        if (category == "图书") product = new Book(name, desc, price, stock, merchantUsername, imagePath);
-        else if (category == "服装") product = new Clothing(name, desc, price, stock, merchantUsername, imagePath);
-        else if (category == "食品") product = new Food(name, desc, price, stock, merchantUsername, imagePath);
+        if (category == "图书") product = new Book(name, desc, price, stock, merchantUsername, imagePath, frozenStock);
+        else if (category == "服装") product = new Clothing(name, desc, price, stock, merchantUsername, imagePath, frozenStock);
+        else if (category == "食品") product = new Food(name, desc, price, stock, merchantUsername, imagePath, frozenStock);
         if (product) {
             products.append(product);
         }
     }
+    qDebug() << "Client: load products successfully." << '\n';
+
     return products;
 }
 
@@ -130,6 +133,8 @@ bool FileManager::saveUser(const User* user)
     }
     file.write(QJsonDocument(jsonArray).toJson());
     file.close();
+    qDebug() << "Client: save user successfully." << '\n';
+
     return true;
 }
 
@@ -163,6 +168,8 @@ bool FileManager::saveProducts(const QList<Product*>& products){
     }
     file.write(QJsonDocument(root).toJson());
     file.close();
+    qDebug() << "Client: save products successfully." << '\n';
+
     return true;
 }
 
@@ -183,6 +190,8 @@ bool FileManager::saveShoppingCarts(const QVariantMap& allCarts) {
 
     QJsonDocument doc(root);
     file.write(doc.toJson());
+    qDebug() << "Client: save shoppingCarts successfully." << '\n';
+
     return true;
 }
 
@@ -202,6 +211,8 @@ QVariantMap FileManager::loadAllShoppingCarts() {
             allCarts[username] = userCart;
         }
     }
+    qDebug() << "Client: load all shoppingCarts successfully." << '\n';
+
     return allCarts;
 }
 
@@ -255,6 +266,8 @@ bool FileManager::saveOrders(const QList<Order*>& orders) {
     QJsonDocument doc(orderArray);
     file.write(doc.toJson());
     file.close();
+    qDebug() << "Client: save orders successfully." << '\n';
+
     return true;
 }
 
@@ -317,6 +330,8 @@ QList<Order*> FileManager::loadOrders(const QList<Product*>& allProducts) {
             orders.append(order);
         }
     }
+    qDebug() << "Client: load orders successfully." << '\n';
+
     return orders;
 }
 
@@ -332,6 +347,8 @@ bool FileManager::clearUserShoppingCart(const QString& username) {
     }
 
     bool success = FileManager::saveShoppingCarts(allCarts);
+
+    qDebug() << "Client: clear user shoppingCart successfully." << '\n';
 
     return success;
 }

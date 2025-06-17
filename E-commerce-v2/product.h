@@ -20,13 +20,15 @@ public:
             double price,
             int stk,
             const QString& merchantUsername,
-            const QString& imgPath = ""):
+            const QString& imgPath = "",
+            int frozenStock = 0):
         name(n),
         description(desc),
         basePrice(price),
         stock(stk),
         merchantUsername(merchantUsername),
-        imagePath(imgPath){}
+        imagePath(imgPath),
+        frozenStock(frozenStock) {}
 
     virtual ~Product() = default;
 

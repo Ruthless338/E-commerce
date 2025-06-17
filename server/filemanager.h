@@ -15,9 +15,12 @@
 #include "book.h"
 #include "clothing.h"
 #include "food.h"
+#include <QObject>
+#include <QMutex>
 
-class FileManager
+class FileManager : public QObject
 {
+    Q_OBJECT
 public:
     static QMap<QString, User*> loadAllUsers();
     static QList<Product*> loadProducts();
@@ -31,6 +34,13 @@ public:
     static bool saveOrders(const QList<Order*>& orders);
     static QList<Order*> loadOrders(const QList<Product*>& allProducts);
     static bool clearUserShoppingCart(const QString& username);
+
+    static QJsonDocument loadJson(const QString& filename);
+    static bool saveJson(const QString& filename, const QJsonDocument& doc);
+
+private:
+    static QString dataPathPrefix;
+    static QMutex fileMutex; // 静态互斥锁，保护所有文件访问
 };
 
 #endif // FILEMANAGER_H

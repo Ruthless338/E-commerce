@@ -17,6 +17,8 @@ int main(int argc, char *argv[]) {
     QQmlApplicationEngine engine;
     QQuickStyle::setStyle("Material");
 
+    qDebug() << "Client: connect to localhost:12345" << '\n';
+
     //--------------------- 注册C++类到QML上下文 ---------------------
     // 注册User类为单例，供QML全局调用
     qmlRegisterSingletonType<User>(

@@ -1,5 +1,5 @@
 #include "serverproductmanager.h"
-#include "filemanager.h" // 假设 FileManager.h/.cpp 已加入服务器工程
+#include "filemanager.h"
 #include "product.h"
 #include "book.h"
 #include "clothing.h"
@@ -19,7 +19,7 @@ ServerProductManager::~ServerProductManager() {
 void ServerProductManager::loadProductsFromFile() {
     qDeleteAll(m_allProducts);
     m_allProducts.clear();
-    m_allProducts = FileManager::loadProducts(); // FileManager 负责加载具体品类折扣
+    m_allProducts = FileManager::loadProducts();
     qInfo() << "ServerProductManager: Loaded" << m_allProducts.count() << "products from file.";
 }
 
@@ -34,8 +34,6 @@ bool ServerProductManager::saveProductsToFile() {
 }
 
 QList<Product*> ServerProductManager::getAllProducts() {
-    // 返回的是指针列表，注意生命周期管理。
-    // ClientHandler 在序列化时应只读取数据，不获取所有权。
     return m_allProducts;
 }
 
@@ -50,8 +48,8 @@ Product* ServerProductManager::findProductByNameAndMerchant(const QString& name,
 
 QList<Product*> ServerProductManager::searchProducts(const QString &keyword, int searchType, double minPrice, double maxPrice) {
     QList<Product*> filtered;
-    double mi = (minPrice < 0) ? 0 : minPrice; // 如果传入负数，则认为无下限
-    double ma = (maxPrice < 0) ? std::numeric_limits<double>::max() : maxPrice; // 如果传入负数，则认为无上限
+    double mi = (minPrice < 0) ? 0 : minPrice;
+    double ma = (maxPrice < 0) ? std::numeric_limits<double>::max() : maxPrice;
 
     for (Product *product : m_allProducts) {
         double currentPrice = product->getPrice(); // 获取打折后的价格
@@ -159,11 +157,11 @@ void ServerProductManager::setCategoryDiscount(const QString& category, double d
 
 bool ServerProductManager::freezeStock(Product* product, int quantity) {
     if (!product || quantity <= 0) return false;
-    if (product->getAvailableStock() < quantity) { // 使用 getAvailableStock 检查实际可用库存
+    if (product->getAvailableStock() < quantity) {
         qWarning() << "ServerProductManager: Not enough available stock to freeze for" << product->getName() << ". Available:" << product->getAvailableStock() << "Requested:" << quantity;
         return false;
     }
-    product->freezeStock(quantity); // Product 类需要有 freezeStock 方法
+    product->freezeStock(quantity);
     qInfo() << "ServerProductManager: Froze" << quantity << "of" << product->getName() << ". Current stock:" << product->getStock() << "Frozen:" << product->getFrozenStock(); // Assuming product has frozenStock member
     // No need to save to file yet, only on confirm/release
     return true;
@@ -171,7 +169,7 @@ bool ServerProductManager::freezeStock(Product* product, int quantity) {
 
 bool ServerProductManager::releaseFrozenStock(Product* product, int quantity) {
     if (!product || quantity <= 0) return false;
-    product->releaseStock(quantity); // Product 类需要有 releaseStock 方法
+    product->releaseStock(quantity);
     qInfo() << "ServerProductManager: Released" << quantity << "of" << product->getName() << ". Current stock:" << product->getStock() << "Frozen:" << product->getFrozenStock();
     // No need to save to file, as stock didn't change, only frozen count
     return true;

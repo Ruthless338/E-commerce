@@ -8,20 +8,32 @@
         {
             "category": "图书",
             "description": "中国四大名著之一",
+            "frozenStock": 2949189,
             "imagePath": "D:/Qt_projects/E-commerce/E-commerce-v1/images/111.jpg",
             "merchantUsername": "admin2",
             "name": "西游记",
             "price": 100,
-            "stock": 29
+            "stock": 22
         },
         {
             "category": "图书",
             "description": "中国四大名著之一",
+            "frozenStock": 0,
             "imagePath": "D:/Qt_projects/E-commerce/E-commerce-v1/images/西2.jpg",
             "merchantUsername": "admin2",
             "name": "三国演义",
             "price": 120,
             "stock": 90
+        },
+        {
+            "category": "图书",
+            "description": "中国四大名著之一",
+            "frozenStock": 3145825,
+            "imagePath": "D:/Qt_projects/E-commerce/E-commerce-v1/images/西2.jpg",
+            "merchantUsername": "admin2",
+            "name": "红楼梦",
+            "price": 100,
+            "stock": 222
         }
     ]
 }

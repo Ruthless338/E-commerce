@@ -7,19 +7,17 @@
 #include "serverordermanager.h"
 #include "filemanager.h" // Ensure FileManager paths are correct for server environment
 #include <QThread>
+#include <cstdio>
+#include <stdio.h>
+#include <QTimer>
 
 Server::Server(QObject *parent) : QTcpServer(parent) {
     // Initialize server-side managers
     // These will use FileManager to interact with data files.
     m_authManager = new ServerAuthManager(this);
-    m_productManager = new ServerProductManager(this); // ProductManager might load products here
+    m_productManager = new ServerProductManager(this);
     m_shoppingCartManager = new ServerShoppingCartManager(m_productManager, this);
     m_orderManager = new ServerOrderManager(m_productManager, m_authManager, m_shoppingCartManager, this);
-
-    // IMPORTANT: Ensure FileManager's paths are correct for the server's execution environment.
-    // e.g., QDir::currentPath() + "/data/users.json" or an absolute path.
-    // For now, we assume your existing FileManager hardcoded paths are accessible by the server.
-    qInfo() << "FileManager data path (example users.json):" << "D:/Qt_projects/E-commerce/E-commerce-v3/data/users.json";
     qInfo() << "Server initialized with managers.";
 }
 
@@ -38,7 +36,11 @@ bool Server::startServer(quint16 port) {
 }
 
 void Server::incomingConnection(qintptr socketDescriptor) {
-    qInfo() << "Server: Incoming connection with descriptor" << socketDescriptor;
+    fprintf(stderr, "SERVER DEBUG: incomingConnection ENTERED with descriptor: %lld\n", static_cast<long long>(socketDescriptor));
+    fflush(stderr);
+    qDebug() << "\n=== 新连接到达 ===";
+    qDebug() << "服务器：收到新连接，描述符：" << socketDescriptor;
+    
     // Create a new ClientHandler for each connection
     // Pass manager instances to the handler
     ClientHandler *handler = new ClientHandler(socketDescriptor,
@@ -49,7 +51,7 @@ void Server::incomingConnection(qintptr socketDescriptor) {
                                                this); // Parent to server initially
 
     // For multi-threading, move handler to a new QThread:
-    QThread *thread = new QThread();
+    QThread *thread = new QThread(this);
     handler->moveToThread(thread); // Move handler to the new thread
 
     connect(thread, &QThread::started, handler, &ClientHandler::process); // Call process when thread starts
@@ -58,10 +60,12 @@ void Server::incomingConnection(qintptr socketDescriptor) {
     connect(thread, &QThread::finished, thread, &QThread::deleteLater); // Schedule thread for deletion
     connect(handler, &ClientHandler::disconnectedFromClient, this, &Server::onClientDisconnected);
 
-
     m_clients.append(handler); // Keep track of active handlers
+    QTimer::singleShot(100, handler, [handler]() {
+        handler->process(); // 延迟启动处理逻辑
+    });
     thread->start();
-    qInfo() << "Server: Client handler started in a new thread. Total active handlers:" << m_clients.count();
+    qDebug() << "服务器：客户端处理器已在新线程中启动。当前活动连接数：" << m_clients.count() << "\n";
 }
 
 void Server::onClientDisconnected(ClientHandler* client) {

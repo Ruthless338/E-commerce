@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/">
+        <file>data/products.json</file>
+        <file>data/users.json</file>
+        <file>data/order.json</file>
+        <file>data/shoppingCart.json</file>
+    </qresource>
+</RCC>

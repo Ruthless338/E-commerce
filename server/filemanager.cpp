@@ -1,7 +1,11 @@
 #include "filemanager.h"
 
+// 在类的实现文件中定义静态成员
+QMutex FileManager::fileMutex;
+
 QMap<QString, User*> FileManager::loadAllUsers()
 {
+    QMutexLocker locker(&fileMutex); // 加锁
     QMap<QString, User*> users;
     QFile file("D:/Qt_projects/E-commerce/E-commerce-v2/data/users.json");
     //处理打开失败
@@ -52,11 +56,13 @@ QMap<QString, User*> FileManager::loadAllUsers()
 }
 
 bool FileManager::userExist(const QString& username){
+    QMutexLocker locker(&fileMutex); // 加锁
     QMap<QString, User*> users = FileManager::loadAllUsers();
     return users[username]!=nullptr;
 }
 
 QList<Product*> FileManager::loadProducts(){
+    QMutexLocker locker(&fileMutex); // 加锁
     QList<Product*> products;
     QFile file("D:/Qt_projects/E-commerce/E-commerce-v2/data/products.json");
     if (!file.open(QIODevice::ReadOnly)) return products;
@@ -93,6 +99,7 @@ QList<Product*> FileManager::loadProducts(){
 
 bool FileManager::saveUser(const User* user)
 {
+    QMutexLocker locker(&fileMutex); // 加锁
     QMap<QString, User*> existingUsers = loadAllUsers();
     // 删除同名用户
     QString username = user->getUsername();
@@ -134,6 +141,7 @@ bool FileManager::saveUser(const User* user)
 }
 
 bool FileManager::saveProducts(const QList<Product*>& products){
+    QMutexLocker locker(&fileMutex); // 加锁
     QJsonObject root;
     QJsonObject categories;
     categories["图书"] = Book::discount;
@@ -167,6 +175,7 @@ bool FileManager::saveProducts(const QList<Product*>& products){
 }
 
 bool FileManager::saveShoppingCarts(const QVariantMap& allCarts) {
+    QMutexLocker locker(&fileMutex); // 加锁
     QFile file("D:/Qt_projects/E-commerce/E-commerce-v2/data/shoppingCart.json");
     if (!file.open(QIODevice::WriteOnly)) return false;
 
@@ -187,6 +196,7 @@ bool FileManager::saveShoppingCarts(const QVariantMap& allCarts) {
 }
 
 QVariantMap FileManager::loadAllShoppingCarts() {
+    QMutexLocker locker(&fileMutex); // 加锁
     QFile file("D:/Qt_projects/E-commerce/E-commerce-v2/data/shoppingCart.json");
     QVariantMap allCarts;
     if (file.open(QIODevice::ReadOnly)) {
@@ -227,6 +237,7 @@ Order::Status stringToOrderStatus(const QString& statusStr) {
 
 // 保存订单数据
 bool FileManager::saveOrders(const QList<Order*>& orders) {
+    QMutexLocker locker(&fileMutex); // 加锁
     QFile file("D:/Qt_projects/E-commerce/E-commerce-v2/data/order.json");
     if (!file.open(QIODevice::WriteOnly)) return false;
 
@@ -261,6 +272,7 @@ bool FileManager::saveOrders(const QList<Order*>& orders) {
 
 // 加载订单数据
 QList<Order*> FileManager::loadOrders(const QList<Product*>& allProducts) {
+    QMutexLocker locker(&fileMutex); // 加锁
     QList<Order*> orders;
     QFile file("D:/Qt_projects/E-commerce/E-commerce-v2/data/order.json");
     if (file.open(QIODevice::ReadOnly)) {
@@ -310,6 +322,7 @@ QList<Order*> FileManager::loadOrders(const QList<Product*>& allProducts) {
 }
 
 bool FileManager::clearUserShoppingCart(const QString& username) {
+    QMutexLocker locker(&fileMutex); // 加锁
     if(username.isEmpty()) {
         qDebug() << "清空购物车时，用户名为空";
         return false;

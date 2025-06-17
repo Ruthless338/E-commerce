@@ -1,4 +1,5 @@
 #include "globalstate.h"
+#include <QDebug>
 
 GlobalState* GlobalState::m_instance = nullptr;
 
@@ -67,4 +68,13 @@ void GlobalState::setBalance(double balance) {
 
     m_balance = balance;
     emit balanceChanged();
+}
+
+void GlobalState::logout() {
+    setUsername("");
+    setUserType("");
+    setBalance(0.0);
+    setIsMerchant(false);
+    setIsConsumer(false);
+    qDebug() << "GlobalSate: User logged out,state reset";
 }
