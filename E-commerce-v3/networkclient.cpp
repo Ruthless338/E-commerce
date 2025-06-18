@@ -20,7 +20,6 @@ NetworkClient::NetworkClient(QObject *parent) : QObject(parent) {
 }
 
 NetworkClient::~NetworkClient() {
-    // m_pInstance will be nullified if this is the instance, or handled by app exit
 }
 
 bool NetworkClient::connectToServer(const QString& host, quint16 port) {
@@ -67,18 +66,16 @@ void NetworkClient::onSocketError(QAbstractSocket::SocketError socketError) {
 
 void NetworkClient::onSocketReadyRead() {
     m_buffer.append(m_socket->readAll());
-    // Simple delimiter-based framing (newline)
-    // This is still a simplification. Robust framing uses length prefixes.
     while (true) {
         int newlinePos = m_buffer.indexOf('\n');
         if (newlinePos == -1) {
-            break; // No complete message yet
+            break;
         }
 
         QByteArray jsonData = m_buffer.left(newlinePos);
-        m_buffer = m_buffer.mid(newlinePos + 1); // Remove processed message (and newline)
+        m_buffer = m_buffer.mid(newlinePos + 1);
 
-        if (jsonData.isEmpty()) continue; // Skip empty lines if any
+        if (jsonData.isEmpty()) continue;
 
         QJsonParseError error;
         QJsonDocument doc = QJsonDocument::fromJson(jsonData, &error);
@@ -88,7 +85,6 @@ void NetworkClient::onSocketReadyRead() {
             emit responseReceived(doc.object());
         } else {
             qWarning() << "NetworkClient: JSON parse error:" << error.errorString() << "Data:" << jsonData;
-            // Optionally emit an error signal here too
         }
     }
 }

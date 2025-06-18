@@ -1,16 +1,12 @@
 #include "ordermanager.h"
 #include "authmanager.h" // For sendRequestAndWait
 #include "globalstate.h" // For username and updating balance
-// #include "productmodel.h" // 如果支付成功后需要直接通知ProductModel
 #include <QJsonArray>
 #include <QDebug>
 
-// 假设 globalStateInstance 和 productModelInstance (如果需要) 在 main.cpp 定义和初始化
 extern GlobalState* globalStateInstance;
-// extern ProductModel* productModelInstance;
 
 OrderManager::OrderManager(QObject *parent) : QObject(parent), m_shoppingCart(nullptr) {
-    // 通常在 main.cpp 中，创建 OrderManager 后会调用 setCartInstance
 }
 
 void OrderManager::setCartInstance(ShoppingCart* cart) {
@@ -80,17 +76,12 @@ bool OrderManager::payOrder(const QString& orderId) {
             newBalance = data["newBalance"].toDouble();
         } else {
             qWarning() << "OrderManager::payOrder - Server response did not contain a valid 'newBalance'. Using current global balance as fallback (or refetching).";
-            // 可以选择使用当前的余额作为后备，或者更好的做法是，如果服务器没返回，就再请求一次余额
-            // newBalance = globalStateInstance->balance();
-            // 或者触发一次 AuthManager::getBalance(globalStateInstance->username())
-            // 这里我们先用一个明确的警告，并依赖服务器必须返回 newBalance
-            // 如果服务器保证会返回，但可能不是double，可以做更复杂的类型检查
-            newBalance = globalStateInstance->balance(); // 暂时使用旧余额，理想情况是服务器必须返回
+            newBalance = globalStateInstance->balance();
         }        globalStateInstance->setBalance(newBalance); // 更新全局余额
 
         // 支付成功后，购物车通常会被清空 (服务器端处理)
         if (m_shoppingCart) {
-            m_shoppingCart->clearCart(); // 让客户端也清空并刷新（或服务器清空后，下次getCart返回空）
+            m_shoppingCart->clearCart();
         }
         emit stockPossiblyChanged(); // 通知UI（间接通知ProductModel）库存可能变了
         emit orderPaid(true, orderId, "Order paid successfully. New balance: " + QString::number(newBalance));

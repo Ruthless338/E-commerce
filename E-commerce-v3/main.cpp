@@ -3,7 +3,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include "networkclient.h"
-#include "authmanager.h"   // 假设 AuthManager 现在是 QObject，但主要用静态方法
+#include "authmanager.h"
 #include "productmodel.h"
 #include "shoppingcart.h"
 #include "ordermanager.h"

@@ -9,7 +9,6 @@
 class ProductModel : public QAbstractListModel {
     Q_OBJECT
 public:
-    // ... (enum Roles 保持不变) ...
     enum Roles {
         NameRole = Qt::UserRole + 1,
         DescriptionRole,
@@ -19,8 +18,7 @@ public:
         DiscountRole,
         ImagePathRole,
         MerchantUsernameRole,
-        BasePriceRole // 这个角色在单机版可能没有，是服务器端计算的
-        // ProductPointerRole 不再适用
+        BasePriceRole 
     };
 
     explicit ProductModel(QObject *parent = nullptr); // 构造函数
@@ -39,9 +37,6 @@ public:
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames() const override;
 
-    // 单机版中 ProductModel 可能有的其他辅助方法，如果QML用到也要保留
-    // 例如，通过名称查找商品（现在会在客户端缓存中查找）
-    // Product* findProduct(const QString& name) const; // 这个返回 Product* 比较麻烦
     QVariantMap findProductData(const QString& name, const QString& merchantUsername) const; // 返回 QVariantMap 更安全
 
 private:

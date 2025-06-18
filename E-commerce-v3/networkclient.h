@@ -33,6 +33,6 @@ private:
     explicit NetworkClient(QObject *parent = nullptr);
     QTcpSocket *m_socket;
     static NetworkClient* m_pInstance;
-    QByteArray m_buffer; // 用于处理粘包、分包问题 (简化版也需要)
+    QByteArray m_buffer;
 };
 #endif // NETWORKCLIENT_H

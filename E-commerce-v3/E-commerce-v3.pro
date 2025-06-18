@@ -9,40 +9,21 @@ QT += quick \
 
 HEADERS += \
         authmanager.h \
-        book.h \
-        clothing.h \
-        consumer.h \
-        filemanager.h \
-        food.h \
         globalstate.h \
-        main.h \
-        merchant.h \
         networkclient.h \
-        order.h \
         ordermanager.h \
-        product.h \
         productmodel.h \
         shoppingcart.h \
-        user.h
 
 
 SOURCES += \
         authmanager.cpp \
-        book.cpp \
-        clothing.cpp \
-        consumer.cpp \
-        filemanager.cpp \
-        food.cpp \
         globalstate.cpp \
         main.cpp \
-        merchant.cpp \
         networkclient.cpp \
-        order.cpp \
         ordermanager.cpp \
-        product.cpp \
         productmodel.cpp \
         shoppingcart.cpp \
-        user.cpp
 
 RESOURCES += qml.qrc \
              images.qrc \
